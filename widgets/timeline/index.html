@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pluto Phases — 3-Year Timeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://sanjupaison.github.io/pluto-phases-meter/pluto-style.css">
+<link rel="stylesheet" href="timeline.css">
+<style>
+  /* Wider than the shared 520px default, to fit a 3-year timeline without
+     horizontal scrolling — matches the width used by the sister "Journey
+     Through the Zodiac" widget. */
+  .app { max-width: 800px; }
+
+  #ptw-loading {
+    text-align: center; padding: 30px 12px; color: var(--text-lo); font-size: 13px;
+  }
+
+  #ptw-birth-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  #ptw-birth-fields label { font-size: 11.5px; color: var(--text-hi); font-weight: 600; display: block; margin-bottom: 3px; }
+  #ptw-birth-fields input, #ptw-birth-fields select {
+    width: 100%; background: var(--bg-1); border: 1px solid var(--card-border); color: var(--text-hi);
+    border-radius: var(--radius-sm); padding: 8px 10px; font-family: var(--font-mono); font-size: 13px;
+  }
+  .ptw-field-full { grid-column: 1 / -1; }
+  #ptw-btn-row { display: flex; gap: 8px; margin-top: 14px; align-items: stretch; }
+  #ptw-submit {
+    flex: 1; padding: 14px 10px; border-radius: var(--radius-sm);
+    border: 1px solid var(--accent); background: var(--accent); color: var(--bg-0);
+    font-weight: 700; font-size: 14px; letter-spacing: .03em; cursor: pointer;
+  }
+  #ptw-buy-btn {
+    flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
+    padding: 10px 14px; border-radius: var(--radius-sm); border: none; background: transparent;
+    color: var(--text-lo); font-weight: 600; font-size: 12px; letter-spacing: .02em;
+    text-decoration: underline; text-decoration-style: dotted; cursor: pointer; white-space: nowrap;
+  }
+  #ptw-buy-btn:hover { color: var(--accent); }
+  #ptw-error { color: #fca5a5; font-size: 12.5px; text-align: center; min-height: 16px; margin-top: 6px; }
+  #ptw-geo-status.ptw-geo-ok { color: #86efac; }
+  #ptw-geo-status.ptw-geo-err { color: #fca5a5; }
+  #ptw-geo-status.ptw-geo-pending { color: var(--text-lo); }
+</style>
+</head>
+<body data-theme="space">
+<div class="app">
+  <header>
+    <div class="title-block"><h1>Pluto Phases Timeline</h1></div>
+  </header>
+
+  <div class="ppt-hint">Click on bars to reveal interpretation.</div>
+  <div id="ptw-timeline">
+    <div id="ptw-loading" class="ppt-root">Loading timeline&hellip;</div>
+  </div>
+  <div id="ptw-legend" class="ppt-legend" style="display:none;"></div>
+  <div id="ptw-detail" class="ppt-detail">
+    <h3 id="ptw-detail-title"></h3>
+    <p id="ptw-detail-text"></p>
+  </div>
+
+  <div class="zodiac-card">
+    <form id="ptw-form">
+      <div id="ptw-birth-fields">
+        <div><label for="ptw-gender">Gender</label>
+          <select id="ptw-gender"><option value="male" selected>Male</option><option value="female">Female</option></select>
+        </div>
+        <div><label for="ptw-year">Birth year</label><input id="ptw-year" type="number" value="1990" min="1800" max="2100" required></div>
+        <div><label for="ptw-month">Birth month</label><input id="ptw-month" type="number" value="6" min="1" max="12" required></div>
+        <div><label for="ptw-day">Birth day</label><input id="ptw-day" type="number" value="15" min="1" max="31" required></div>
+        <div class="ptw-field-full"><label for="ptw-hour">Birth time</label>
+          <div style="display:flex;gap:6px;">
+            <select id="ptw-hour" required></select>
+            <select id="ptw-minute" required></select>
+            <select id="ptw-ampm" required></select>
+          </div>
+        </div>
+        <div class="ptw-field-full"><label for="ptw-timezone">Time zone at birth place</label>
+          <select id="ptw-timezone"></select>
+        </div>
+        <div class="ptw-field-full">
+          <label for="ptw-place">Birth place <span style="font-weight:400;color:var(--text-lo);">(optional &mdash; adds the Ascendant &amp; Midheaven rows)</span></label>
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="ptw-place" placeholder="e.g. Kolkata, India" autocomplete="off" style="flex:1;" value="Kolkata, India">
+            <button type="button" id="ptw-locate-btn" class="toggle-btn" style="flex:0 0 auto;padding:8px 14px;">Locate</button>
+          </div>
+          <div id="ptw-geo-status" style="font-size:11px;margin-top:4px;min-height:14px;"></div>
+        </div>
+      </div>
+      <div id="ptw-btn-row">
+        <button type="submit" id="ptw-submit">Show My Timeline</button>
+        <button type="button" id="ptw-buy-btn">100 Years ($60)</button>
+      </div>
+      <div id="ptw-error"></div>
+    </form>
+  </div>
+
+  <footer>
+    <a href="disclaimer.html" target="_blank" rel="noopener">Disclaimer &amp; Terms</a>
+    <span class="sep">&middot;</span>
+    <a href="privacy.html" target="_blank" rel="noopener">Privacy</a>
+    <span class="sep">&middot;</span>
+    <a href="https://lifeprediction.net" target="_blank" rel="noopener">lifeprediction.net</a>
+    <div class="disclaimer-line">For entertainment and personal reflection only. Not scientific, medical, legal, or financial advice.</div>
+  </footer>
+</div>
+
+<script src="timeline-render.js"></script>
+<script src="timeline-client.js"></script>
+</body>
+</html>

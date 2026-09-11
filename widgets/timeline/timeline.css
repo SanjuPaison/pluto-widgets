@@ -1,0 +1,101 @@
+/* ============================================================
+   timeline.css — extends pluto-style.css for the Pluto Phases
+   Timeline widget (Version 1) and generated report (Version 2).
+   Uses only the shared theme variables from pluto-style.css —
+   no colors are hardcoded here except the small semantic aspect
+   palette and the 12-color sign palette (defined in JS), both of
+   which stay the same across all themes so their meaning stays
+   recognizable regardless of the chosen theme.
+
+   Layout is fit-to-container by design: the renderer computes
+   pixels-per-day from the container's real width, so nothing in
+   here should introduce horizontal scrolling.
+   ============================================================ */
+
+.ppt-root {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 10px;
+  margin-bottom: 10px;
+  overflow: hidden; /* guards against sub-pixel rounding, never triggers a scrollbar */
+}
+
+.ppt-track { position: relative; padding-top: 0; padding-bottom: 0; }
+
+/* Year-number row ("2025", "2026", ...) — plain text, no fill color, shown
+   only when there's realistically room (short ranges, e.g. the 3-year V1
+   widget); automatically skipped on long ranges like the 100-year report. */
+.ppt-yearnum-row { min-height: 20px; border-top: none; }
+.ppt-yearnum-lane { height: 20px; }
+.ppt-yearnum-cell {
+  position: absolute; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; color: var(--text-lo); font-family: var(--font-mono);
+  border-right: 1px solid var(--card-border); overflow: hidden; white-space: nowrap;
+}
+
+.ppt-row { display: flex; align-items: stretch; min-height: 28px; border-top: 1px solid var(--card-border); }
+.ppt-row:first-of-type { border-top: none; }
+.ppt-row-label {
+  width: 72px; flex-shrink: 0;
+  display: flex; align-items: center; padding: 3px 8px; font-size: 10.5px;
+  line-height: 1.15; font-weight: 700; letter-spacing: .01em; color: var(--text-hi);
+  background: var(--bg-1); border-right: 1px solid var(--card-border);
+}
+.ppt-house-row .ppt-row-label { color: var(--accent); }
+
+/* Year-luck row: the most prominent row, shown first, above the house rows */
+.ppt-year-row { min-height: 34px; }
+.ppt-year-row .ppt-row-label {
+  font-size: 11px; color: var(--text-hi); background: var(--bg-2);
+}
+.ppt-year-lane { height: 34px; }
+.ppt-year-seg {
+  top: 2px; bottom: 2px; font-weight: 700; font-size: 14px; color: var(--bg-0);
+  border: none; border-radius: 0;
+}
+.ppt-year-seg:hover { filter: brightness(1.1); }
+.ppt-year-row .ppt-lane { position: relative; }
+
+.ppt-lane { position: relative; height: 28px; }
+
+.ppt-seg {
+  position: absolute; top: 3px; bottom: 3px;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  font-size: 11px; color: var(--text-hi); cursor: pointer; overflow: hidden;
+  white-space: nowrap; padding: 0 4px; transition: filter .15s;
+}
+.ppt-house-seg {
+  border-radius: 0; /* flush/seamless against its neighbors, no gaps or rounded seams */
+  border: none;
+}
+.ppt-house-seg:hover { filter: brightness(1.12); }
+
+.ppt-hit {
+  position: absolute; top: 6px; height: 16px; border-radius: 8px;
+  cursor: pointer; opacity: .85; transition: .15s;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.25) inset;
+}
+.ppt-hit:hover { opacity: 1; transform: scaleY(1.15); }
+
+.ppt-today-mark {
+  position: absolute; top: 0; bottom: 0; width: 2px; background: var(--text-hi);
+  opacity: .6;
+}
+
+/* The interpretation box is always present and never collapses — it always
+   shows *something* (a default, e.g. the current year, when nothing's been
+   clicked yet) so the layout never jumps. */
+.ppt-detail {
+  margin-top: 10px; background: var(--card); border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 14px; min-height: 76px;
+}
+.ppt-detail h3 { margin: 0 0 8px; font-size: 15px; color: var(--accent); font-weight: 700; }
+.ppt-detail p { margin: 0; font-size: 14px; line-height: 1.65; color: var(--text-hi); }
+.ppt-detail-empty { color: var(--text-lo); font-size: 13px; font-style: italic; }
+
+.ppt-hint { font-size: 12px; color: var(--text-lo); margin: 0 0 8px; text-align: center; }
+
+.ppt-legend { display: flex; flex-wrap: wrap; gap: 10px 14px; margin: 0 0 10px; font-size: 12px; color: var(--text-hi); font-weight: 600; }
+.ppt-legend-item { display: flex; align-items: center; gap: 5px; }
+.ppt-legend-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
