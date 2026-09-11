@@ -74,6 +74,15 @@
   }
   #pw-profile-note{ font-size:11px; color:var(--text-faint); margin-top:8px; }
 
+  .pw-chip-row{ display:flex; gap:6px; flex-wrap:wrap; }
+  .pw-chip{
+    border:1px solid var(--card-border); background:var(--bg-1); color:var(--text-hi);
+    border-radius:var(--radius-sm,8px); padding:7px 12px; font-size:13px; cursor:pointer;
+    font-family:var(--font-body);
+  }
+  .pw-chip.active{ background:var(--accent); border-color:var(--accent); color:var(--bg-0); font-weight:700; }
+  .pw-chip:hover{ border-color:var(--accent); }
+
   #pw-profile-summary{ display:none; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
   #pw-profile-summary .pw-sum-text{ font-size:14px; }
   #pw-profile-summary .pw-sum-text b{ color:var(--accent); }
@@ -202,10 +211,26 @@
         </div>
         <div class="pw-row">
           <div style="flex:1 1 100%;">
-            <label for="pw-place">Birth place</label>
+            <label for="pw-place">Birth Location</label>
             <div class="pw-place-row">
               <input type="text" id="pw-place" placeholder="e.g. Kolkata, India" autocomplete="off">
             </div>
+          </div>
+        </div>
+
+        <h2 class="pw-sub-h2">Current Location</h2>
+        <div class="pw-row">
+          <div style="flex:1 1 100%;">
+            <label for="pw-current-place">City or place</label>
+            <div class="pw-place-row">
+              <input type="text" id="pw-current-place" placeholder="e.g. New York, USA" autocomplete="off">
+              <button type="button" id="pw-current-locate" class="pw-chip">Locate</button>
+            </div>
+          </div>
+        </div>
+        <div class="pw-row">
+          <div style="flex:1 1 100%;">
+            <div class="pw-chip-row" id="pw-current-city-chips"></div>
           </div>
         </div>
 
@@ -236,6 +261,62 @@
           <div>
             <label for="pwp-ampm">AM/PM</label>
             <select id="pwp-ampm"></select>
+          </div>
+        </div>
+
+        <h2 class="pw-sub-h2">Meter Settings</h2>
+        <div class="pw-row">
+          <div style="flex:1 1 100%;">
+            <label>Sign</label>
+            <div class="pw-chip-row" id="pwm-sign-row"></div>
+          </div>
+        </div>
+        <div class="pw-row">
+          <div style="flex:1 1 100%;">
+            <label>Gender</label>
+            <div class="pw-chip-row" id="pwm-gender-row">
+              <button type="button" class="pw-chip active" data-gender="male">Male</button>
+              <button type="button" class="pw-chip" data-gender="female">Female</button>
+            </div>
+          </div>
+        </div>
+        <div class="pw-row">
+          <div style="flex:1 1 100%;">
+            <label>Reading for</label>
+            <div class="pw-chip-row" id="pwm-mode-row">
+              <button type="button" class="pw-chip active" data-mode="now">Now (live)</button>
+              <button type="button" class="pw-chip" data-mode="custom">Custom moment</button>
+            </div>
+          </div>
+        </div>
+        <div id="pwm-custom-fields" style="display:none;">
+          <div class="pw-row">
+            <div>
+              <label for="pwm-month">Month</label>
+              <select id="pwm-month"></select>
+            </div>
+            <div>
+              <label for="pwm-day">Day</label>
+              <select id="pwm-day"></select>
+            </div>
+            <div>
+              <label for="pwm-year">Year</label>
+              <select id="pwm-year"></select>
+            </div>
+          </div>
+          <div class="pw-row">
+            <div>
+              <label for="pwm-hour">Hour</label>
+              <select id="pwm-hour"></select>
+            </div>
+            <div>
+              <label for="pwm-minute">Minute</label>
+              <select id="pwm-minute"></select>
+            </div>
+            <div>
+              <label for="pwm-ampm">AM/PM</label>
+              <select id="pwm-ampm"></select>
+            </div>
           </div>
         </div>
 
@@ -322,10 +403,20 @@
 
   var STORAGE_KEY = "plutoWidgets.sharedBirthProfile";
   var PARTNER_STORAGE_KEY = "plutoWidgets.partnerProfile";
+  var CURRENT_LOCATION_KEY = "plutoWidgets.currentLocation";
+  var METER_STORAGE_KEY = "plutoWidgets.meterSettings";
   var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
   var DEFAULT_PROFILE = { month:1, day:1, year:1990, hour:12, minute:0, ampm:"PM", timeUnknown:false, place:"Kolkata, India" };
   // Default partner profile, editable in the Partner's Birth Details section.
   var DEFAULT_PARTNER = { month:6, day:15, year:1988, hour:10, minute:30, ampm:"AM" };
+  var DEFAULT_CURRENT_LOCATION = { place: "London, UK" };
+  var METER_SIGN_NAMES = ["Global","Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
+  var METER_SIGN_SYMBOLS = ["\uD83C\uDF10","\u2648","\u2649","\u264A","\u264B","\u264C","\u264D","\u264E","\u264F","\u2650","\u2651","\u2652","\u2653"];
+  var DEFAULT_METER = { sign:0, gender:"male", mode:"now", month:1, day:1, year:1990, hour:12, minute:0, ampm:"PM" };
+  var QUICK_CITIES = [
+    { name: "London" }, { name: "New York" }, { name: "Tokyo" },
+    { name: "Dubai" }, { name: "Delhi" }, { name: "Sydney" }
+  ];
 
   // =========================================================
   // Detailed tab row (below birth info) — collapsed by default
@@ -424,6 +515,110 @@
     var pop = document.createElement("option"); pop.value = p; pop.textContent = p; pAmpmSel.appendChild(pop);
   });
 
+  // Meter custom-moment selects (same option lists, separate elements)
+  var mMonthSel = document.getElementById("pwm-month");
+  var mDaySel = document.getElementById("pwm-day");
+  var mYearSel = document.getElementById("pwm-year");
+  var mHourSel = document.getElementById("pwm-hour");
+  var mMinuteSel = document.getElementById("pwm-minute");
+  var mAmpmSel = document.getElementById("pwm-ampm");
+
+  MONTHS.forEach(function(name, i){
+    var o = document.createElement("option"); o.value = i + 1; o.textContent = name; mMonthSel.appendChild(o);
+  });
+  for (var md = 1; md <= 31; md++){
+    var mod_ = document.createElement("option"); mod_.value = md; mod_.textContent = md; mDaySel.appendChild(mod_);
+  }
+  for (var my = curYear; my >= 1930; my--){
+    var moy = document.createElement("option"); moy.value = my; moy.textContent = my; mYearSel.appendChild(moy);
+  }
+  for (var mh = 1; mh <= 12; mh++){
+    var moh = document.createElement("option"); moh.value = mh; moh.textContent = (mh < 10 ? "0" + mh : mh); mHourSel.appendChild(moh);
+  }
+  for (var mm = 0; mm <= 59; mm++){
+    var mom_ = document.createElement("option"); mom_.value = mm; mom_.textContent = (mm < 10 ? "0" + mm : mm); mMinuteSel.appendChild(mom_);
+  }
+  ["AM","PM"].forEach(function(p){
+    var mop = document.createElement("option"); mop.value = p; mop.textContent = p; mAmpmSel.appendChild(mop);
+  });
+
+  // Meter sign chips (Global + 12 signs)
+  var signRow = document.getElementById("pwm-sign-row");
+  var meterSignValue = 0;
+  METER_SIGN_NAMES.forEach(function(name, idx){
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "pw-chip" + (idx === 0 ? " active" : "");
+    btn.setAttribute("data-sign", idx);
+    btn.textContent = METER_SIGN_SYMBOLS[idx] + " " + name;
+    btn.addEventListener("click", function(){
+      meterSignValue = parseInt(this.getAttribute("data-sign"), 10);
+      Array.prototype.slice.call(signRow.children).forEach(function(b){ b.classList.remove("active"); });
+      this.classList.add("active");
+    });
+    signRow.appendChild(btn);
+  });
+
+  // Meter gender chips
+  var genderRow = document.getElementById("pwm-gender-row");
+  var meterGenderValue = "male";
+  Array.prototype.slice.call(genderRow.children).forEach(function(btn){
+    btn.addEventListener("click", function(){
+      meterGenderValue = this.getAttribute("data-gender");
+      Array.prototype.slice.call(genderRow.children).forEach(function(b){ b.classList.remove("active"); });
+      this.classList.add("active");
+    });
+  });
+
+  // Meter now/custom mode chips
+  var modeRow = document.getElementById("pwm-mode-row");
+  var customFields = document.getElementById("pwm-custom-fields");
+  var meterModeValue = "now";
+  Array.prototype.slice.call(modeRow.children).forEach(function(btn){
+    btn.addEventListener("click", function(){
+      meterModeValue = this.getAttribute("data-mode");
+      Array.prototype.slice.call(modeRow.children).forEach(function(b){ b.classList.remove("active"); });
+      this.classList.add("active");
+      customFields.style.display = (meterModeValue === "custom") ? "" : "none";
+    });
+  });
+
+  // Current-location field + city chips
+  var currentPlaceInput = document.getElementById("pw-current-place");
+  var currentChipsWrap = document.getElementById("pw-current-city-chips");
+  QUICK_CITIES.forEach(function(c){
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "pw-chip";
+    btn.textContent = c.name;
+    btn.addEventListener("click", function(){
+      currentPlaceInput.value = c.name;
+    });
+    currentChipsWrap.appendChild(btn);
+  });
+  document.getElementById("pw-current-locate").addEventListener("click", function(){
+    var btn = this;
+    if (!navigator.geolocation){ alert("Geolocation isn't available in this browser."); return; }
+    btn.disabled = true; btn.textContent = "Locating…";
+    navigator.geolocation.getCurrentPosition(function(pos){
+      var lat = pos.coords.latitude, lon = pos.coords.longitude;
+      fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lon)
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          var addr = res && res.address;
+          var name = addr ? (addr.city || addr.town || addr.village || (res.display_name || "").split(",")[0]) : null;
+          currentPlaceInput.value = name || (lat.toFixed(3) + ", " + lon.toFixed(3));
+        })
+        .catch(function(){
+          currentPlaceInput.value = lat.toFixed(3) + ", " + lon.toFixed(3);
+        })
+        .then(function(){ btn.disabled = false; btn.textContent = "Locate"; });
+    }, function(err){
+      alert("Could not get your location: " + err.message);
+      btn.disabled = false; btn.textContent = "Locate";
+    });
+  });
+
   // =========================================================
   // Load / save shared birth profile
   // =========================================================
@@ -447,6 +642,62 @@
   }
   function writePartnerProfile(p){
     try { localStorage.setItem(PARTNER_STORAGE_KEY, JSON.stringify(p)); } catch(e){}
+  }
+  function readCurrentLocation(){
+    try {
+      var raw = localStorage.getItem(CURRENT_LOCATION_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e){ return null; }
+  }
+  function writeCurrentLocation(p){
+    try { localStorage.setItem(CURRENT_LOCATION_KEY, JSON.stringify(p)); } catch(e){}
+  }
+  function readMeterProfile(){
+    try {
+      var raw = localStorage.getItem(METER_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e){ return null; }
+  }
+  function writeMeterProfile(p){
+    try { localStorage.setItem(METER_STORAGE_KEY, JSON.stringify(p)); } catch(e){}
+  }
+  function fillCurrentLocationForm(p){
+    if (!p) return;
+    currentPlaceInput.value = p.place || "";
+  }
+  function currentCurrentLocation(){
+    return { place: currentPlaceInput.value.trim() };
+  }
+  function fillMeterFormFromProfile(p){
+    if (!p) return;
+    meterSignValue = p.sign || 0;
+    Array.prototype.slice.call(signRow.children).forEach(function(b){
+      b.classList.toggle("active", parseInt(b.getAttribute("data-sign"), 10) === meterSignValue);
+    });
+    meterGenderValue = p.gender || "male";
+    Array.prototype.slice.call(genderRow.children).forEach(function(b){
+      b.classList.toggle("active", b.getAttribute("data-gender") === meterGenderValue);
+    });
+    meterModeValue = p.mode || "now";
+    Array.prototype.slice.call(modeRow.children).forEach(function(b){
+      b.classList.toggle("active", b.getAttribute("data-mode") === meterModeValue);
+    });
+    customFields.style.display = (meterModeValue === "custom") ? "" : "none";
+    mMonthSel.value = p.month; mDaySel.value = p.day; mYearSel.value = p.year;
+    mHourSel.value = p.hour; mMinuteSel.value = p.minute; mAmpmSel.value = p.ampm;
+  }
+  function currentMeterProfile(){
+    return {
+      sign: meterSignValue,
+      gender: meterGenderValue,
+      mode: meterModeValue,
+      month: parseInt(mMonthSel.value, 10),
+      day: parseInt(mDaySel.value, 10),
+      year: parseInt(mYearSel.value, 10),
+      hour: parseInt(mHourSel.value, 10),
+      minute: parseInt(mMinuteSel.value, 10),
+      ampm: mAmpmSel.value
+    };
   }
   function formatSummary(p, partner){
     var monthName = MONTHS[(p.month|0) - 1] || "";
@@ -506,8 +757,20 @@
     existingPartner = DEFAULT_PARTNER;
     writePartnerProfile(existingPartner);
   }
+  var existingCurrentLocation = readCurrentLocation();
+  if (!existingCurrentLocation){
+    existingCurrentLocation = DEFAULT_CURRENT_LOCATION;
+    writeCurrentLocation(existingCurrentLocation);
+  }
+  var existingMeter = readMeterProfile();
+  if (!existingMeter){
+    existingMeter = DEFAULT_METER;
+    writeMeterProfile(existingMeter);
+  }
   fillFormFromProfile(existing);
   fillPartnerFormFromProfile(existingPartner);
+  fillCurrentLocationForm(existingCurrentLocation);
+  fillMeterFormFromProfile(existingMeter);
   summaryText.innerHTML = formatSummary(existing, existingPartner);
   profileCard.classList.add("saved");
 
@@ -518,8 +781,12 @@
     }
     var p = currentProfile();
     var partner = currentPartnerProfile();
+    var currentLoc = currentCurrentLocation();
+    var meter = currentMeterProfile();
     writeProfile(p);
     writePartnerProfile(partner);
+    writeCurrentLocation(currentLoc);
+    writeMeterProfile(meter);
     summaryText.innerHTML = formatSummary(p, partner);
     profileCard.classList.add("saved");
     applyProfileToAllIframes();
@@ -544,8 +811,7 @@
     ],
     "location-checker": [
       ["month","lc-bmonth"], ["day","lc-bday"], ["year","lc-byear"],
-      ["hour","lc-bhour"], ["minute","lc-bminute"], ["ampm","lc-bampm"],
-      ["place","lc-place"]
+      ["hour","lc-bhour"], ["minute","lc-bminute"], ["ampm","lc-bampm"]
     ],
     "partner-match": [
       ["month","pm-p1-month"], ["day","pm-p1-day"], ["year","pm-p1-year"],
@@ -604,16 +870,63 @@
     });
   }
 
+  function applyCurrentLocationToDoc(doc){
+    if (!doc) return;
+    var cl = readCurrentLocation() || DEFAULT_CURRENT_LOCATION;
+    var el = doc.getElementById("lc-place");
+    if (!el) return;
+    el.value = cl.place || "";
+    fireEvents(el);
+  }
+
+  function applyMeterProfileToDoc(doc){
+    if (!doc) return;
+    var m = readMeterProfile() || DEFAULT_METER;
+
+    var wrap = doc.getElementById("zodiacRow");
+    if (wrap){
+      var signName = METER_SIGN_NAMES[m.sign] || "Global";
+      var sBtn = Array.prototype.slice.call(wrap.children).filter(function(b){
+        return b.title === signName;
+      })[0];
+      if (sBtn && !sBtn.classList.contains("active")) sBtn.click();
+    }
+
+    var gwrap = doc.getElementById("genderToggle");
+    if (gwrap){
+      var gBtn = Array.prototype.slice.call(gwrap.children).filter(function(b){
+        return b.getAttribute("data-gender") === m.gender;
+      })[0];
+      if (gBtn && !gBtn.classList.contains("active")) gBtn.click();
+    }
+
+    var mwrap = doc.getElementById("dateModeToggle");
+    if (mwrap){
+      var mBtn = Array.prototype.slice.call(mwrap.children).filter(function(b){
+        return b.getAttribute("data-mode") === m.mode;
+      })[0];
+      if (mBtn && !mBtn.classList.contains("active")) mBtn.click();
+    }
+
+    if (m.mode === "custom"){
+      [["month","customMonth"],["day","customDay"],["year","customYear"],
+       ["hour","customHour"],["minute","customMinute"],["ampm","customAmpm"]].forEach(function(pair){
+        var el = doc.getElementById(pair[1]);
+        if (!el) return;
+        el.value = m[pair[0]];
+        fireEvents(el);
+      });
+    }
+  }
+
   // Birth-related input fields/buttons in the bottom (detailed) tools
   // are hidden here since Birth Details up top now drives them —
   // only each tool's own non-birth controls and results stay visible.
+  // "What Was Happening", "Where & When" and "Timeline" are left fully
+  // untouched (just get a courtesy birth-data prefill) per instructions.
   var DETAIL_HIDE = {
-    "meter": [".zodiac-card"],
-    "happening": ["#ppw-form fieldset:nth-of-type(2)"],
-    "where-when": ["#ww-birth-panel > .ww-field"],
-    "location-checker": [".zodiac-card"],
-    "partner-match": [".pm-two-col"],
-    "timeline": [".zodiac-card"]
+    "meter": [".zodiac-card", "#momentPanel"],
+    "location-checker": [".zodiac-card"]
   };
 
   function injectDetailCompact(doc, hideSelectors){
@@ -626,20 +939,12 @@
     } catch(e){}
   }
 
-  function triggerWhereWhenLocate(doc){
-    if (!doc) return;
-    var btn = doc.getElementById("ww-locate-btn");
-    if (btn) btn.click();
-  }
-
-  function autoTriggerDetail(name, doc, p){
-    if (name === "meter") triggerForecast(doc, p);
-    if (name === "location-checker") setTimeout(function(){ triggerLocationLocate(doc); }, 30);
-    if (name === "where-when") setTimeout(function(){ triggerWhereWhenLocate(doc); }, 30);
-    if (name === "timeline") setTimeout(function(){
-      try { doc.defaultView.dispatchEvent(new Event("resize")); } catch(e){}
-      triggerTimeline(doc);
-    }, 150);
+  function autoTriggerDetail(name, doc){
+    if (name === "meter") applyMeterProfileToDoc(doc);
+    if (name === "location-checker"){
+      applyCurrentLocationToDoc(doc);
+      setTimeout(function(){ triggerLocationLocate(doc); }, 30);
+    }
   }
 
   function applyProfileToIframe(panelName, iframeEl){
@@ -649,7 +954,7 @@
     applyFieldMap(doc, p, WIDGET_MAP[panelName]);
     if (panelName === "partner-match") applyFieldMap(doc, readPartnerProfile() || DEFAULT_PARTNER, PARTNER2_MAP);
     injectDetailCompact(doc, DETAIL_HIDE[panelName]);
-    autoTriggerDetail(panelName, doc, p);
+    autoTriggerDetail(panelName, doc);
   }
 
   function makeIframeBackgroundTransparent(iframeEl){
@@ -793,8 +1098,11 @@
     if (!doc) return;
     if (QUICK_MAP[name]) applyFieldMap(doc, p, QUICK_MAP[name]);
     if (name === "partner") applyFieldMap(doc, readPartnerProfile() || DEFAULT_PARTNER, PARTNER2_MAP);
-    if (name === "forecast") triggerForecast(doc, p);
-    if (name === "location") setTimeout(function(){ triggerLocationLocate(doc); }, 30);
+    if (name === "forecast") applyMeterProfileToDoc(doc);
+    if (name === "location"){
+      applyCurrentLocationToDoc(doc);
+      setTimeout(function(){ triggerLocationLocate(doc); }, 30);
+    }
     if (name === "timeline") setTimeout(function(){
       try { doc.defaultView.dispatchEvent(new Event("resize")); } catch(e){}
       triggerTimeline(doc);
