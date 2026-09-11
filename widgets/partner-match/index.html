@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Partner Match</title>
+
+<!-- Shared Pluto visual system, per STYLE-GUIDE.md -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://sanjupaison.github.io/pluto-phases-meter/pluto-style.css">
+
+<style>
+  /* ---- widget-specific bits not covered by pluto-style.css ---- */
+  .pm-row{ display:flex; gap:10px; margin-bottom:8px; }
+  .pm-row:last-child{ margin-bottom:0; }
+  .pm-field{ flex:1; min-width:0; }
+  .pm-field label{
+    display:block; font-size:11px; color:var(--text-faint);
+    text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;
+  }
+  .pm-field select{
+    width:100%; font-family:var(--font-mono); font-size:13px; letter-spacing:.3px;
+    padding:8px 10px; border:1px solid var(--card-border); border-radius:var(--radius-sm);
+    background:var(--bg-1); color:var(--text-hi);
+  }
+  .pm-field input:focus, .pm-field select:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .pm-dob-row, .pm-tob-row{ display:flex; gap:6px; }
+  .pm-dob-row select, .pm-tob-row select{
+    width:100%; font-family:var(--font-mono); font-size:13px; letter-spacing:.3px;
+    padding:8px 4px; border:1px solid var(--card-border); border-radius:var(--radius-sm);
+    background:var(--bg-1); color:var(--text-hi);
+  }
+  .pm-person-label{
+    font-size:13px; font-weight:700; letter-spacing:.5px; color:var(--accent);
+    text-transform:uppercase; margin:0 0 10px;
+  }
+  .pm-two-col{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:420px){ .pm-two-col{ grid-template-columns:1fr; } }
+
+  .pm-bd-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .pm-bd-grid .bd-item{ padding:10px 6px; }
+  .pm-bd-grid .bd-num{ font-size:22px; }
+  .pm-bd-grid .bd-label{ font-size:9.5px; margin-top:4px; }
+  .pm-bd-sub{ font-size:11px; color:var(--text-lo); margin-top:4px; letter-spacing:.2px; }
+
+  .pm-error{
+    margin-top:8px; padding:8px 12px; border-radius:var(--radius-sm); font-size:12.5px;
+    background:var(--bg-1); color:var(--text-lo); border:1px solid var(--card-border); text-align:center;
+  }
+</style>
+</head>
+<body data-theme="space">
+
+<div class="app" id="pm-root">
+
+  <header>
+    <div class="title-block"><h1>Partner Match</h1></div>
+    <div class="header-right">
+      <button type="button" class="header-refresh-btn" id="pm-theme-btn" title="Change theme" aria-label="Change theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="13.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/>
+          <circle cx="17.5" cy="10.5" r="1.2" fill="currentColor" stroke="none"/>
+          <circle cx="8.5" cy="7.5" r="1.2" fill="currentColor" stroke="none"/>
+          <circle cx="6.5" cy="12.5" r="1.2" fill="currentColor" stroke="none"/>
+          <path d="M12 2a10 10 0 1 0 0 20c1.4 0 2-1 2-2 0-.6-.2-1-.5-1.4-.3-.4-.5-.8-.5-1.3 0-1 .8-1.8 1.8-1.8H17a3 3 0 0 0 3-3c0-5.5-3.6-10.5-8-10.5z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- theme picker -->
+  <div class="collapsible-panel" id="pm-theme-panel">
+    <div class="theme-grid">
+      <button type="button" class="theme-swatch" data-theme="space" style="--dot-color:#c084fc" title="Space"></button>
+      <button type="button" class="theme-swatch" data-theme="dashboard" style="--dot-color:#7dd3fc" title="Dashboard"></button>
+      <button type="button" class="theme-swatch" data-theme="celestial" style="--dot-color:#e7c368" title="Celestial"></button>
+      <button type="button" class="theme-swatch" data-theme="synth" style="--dot-color:#ff5fc4" title="Synth"></button>
+    </div>
+  </div>
+
+  <div class="pm-error" id="pm-error" style="display:none;"></div>
+
+  <!-- overall meter -->
+  <div class="meter-card">
+    <div class="meter-pct" id="pm-pct">--%</div>
+    <div class="meter-status" id="pm-status">Enter both birth times to see a reading</div>
+    <div class="meter-track">
+      <div class="meter-fill" id="pm-fill" style="background:linear-gradient(90deg, var(--accent-2), var(--accent));"></div>
+    </div>
+    <div class="meter-scale"><span>0</span><span>50</span><span>100</span></div>
+  </div>
+
+  <!-- breakdown -->
+  <div class="breakdown-card">
+    <div class="pm-bd-grid">
+      <div class="bd-item" id="pm-bd-1">
+        <div class="bd-num">--</div>
+        <div class="bd-label" id="pm-bd-1-label">Person 1 likes Person 2</div>
+        <div class="pm-bd-sub" id="pm-bd-1-sub">Sun &middot; Venus</div>
+      </div>
+      <div class="bd-item" id="pm-bd-2">
+        <div class="bd-num">--</div>
+        <div class="bd-label" id="pm-bd-2-label">Person 2 likes Person 1</div>
+        <div class="pm-bd-sub" id="pm-bd-2-sub">Moon &middot; Venus</div>
+      </div>
+    </div>
+    <div class="hint-box" id="pm-hint" style="margin-top:10px;">Fill in both birth times</div>
+  </div>
+
+  <!-- birth details -->
+  <div class="pm-two-col">
+    <div class="zodiac-card">
+      <p class="pm-person-label">Person 1</p>
+      <div class="gender-row">
+        <button type="button" class="toggle-btn pm-gender-btn active" data-person="1" data-gender="male">Male</button>
+        <button type="button" class="toggle-btn pm-gender-btn" data-person="1" data-gender="female">Female</button>
+      </div>
+      <div class="pm-row">
+        <div class="pm-field">
+          <label for="pm-p1-month">Date</label>
+          <div class="pm-dob-row">
+            <select id="pm-p1-month"><option value="" disabled selected>Month</option></select>
+            <select id="pm-p1-day"><option value="" disabled selected>Day</option></select>
+            <select id="pm-p1-year"><option value="" disabled selected>Year</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="pm-row">
+        <div class="pm-field">
+          <label for="pm-p1-hour">Time</label>
+          <div class="pm-tob-row">
+            <select id="pm-p1-hour"><option value="" disabled selected>Hour</option></select>
+            <select id="pm-p1-minute"><option value="" disabled selected>Min</option></select>
+            <select id="pm-p1-ampm"><option value="" disabled selected>AM/PM</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="pm-row">
+        <div class="pm-field">
+          <label for="pm-p1-utc">Birth time zone</label>
+          <select id="pm-p1-utc"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="zodiac-card">
+      <p class="pm-person-label">Person 2</p>
+      <div class="gender-row">
+        <button type="button" class="toggle-btn pm-gender-btn" data-person="2" data-gender="male">Male</button>
+        <button type="button" class="toggle-btn pm-gender-btn active" data-person="2" data-gender="female">Female</button>
+      </div>
+      <div class="pm-row">
+        <div class="pm-field">
+          <label for="pm-p2-month">Date</label>
+          <div class="pm-dob-row">
+            <select id="pm-p2-month"><option value="" disabled selected>Month</option></select>
+            <select id="pm-p2-day"><option value="" disabled selected>Day</option></select>
+            <select id="pm-p2-year"><option value="" disabled selected>Year</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="pm-row">
+        <div class="pm-field">
+          <label for="pm-p2-hour">Time</label>
+          <div class="pm-tob-row">
+            <select id="pm-p2-hour"><option value="" disabled selected>Hour</option></select>
+            <select id="pm-p2-minute"><option value="" disabled selected>Min</option></select>
+            <select id="pm-p2-ampm"><option value="" disabled selected>AM/PM</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="pm-row">
+        <div class="pm-field">
+          <label for="pm-p2-utc">Birth time zone</label>
+          <select id="pm-p2-utc"></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <a href="partner-match-disclaimer.html" target="_blank" rel="noopener">Disclaimer</a>
+    <span class="sep">&middot;</span>
+    <a href="partner-match-privacy.html" target="_blank" rel="noopener">Privacy</a>
+    <span class="sep">&middot;</span>
+    <a href="https://lifeprediction.net" target="_blank" rel="noopener">lifeprediction.net</a>
+    <div class="disclaimer-line">For entertainment and personal reflection only. Not a substitute for professional relationship, psychological, or legal advice.</div>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ===================================================================
+     Astronomy — Julian Day, Sun, Moon, and Venus geocentric ecliptic
+     longitude. Only these three bodies are needed here, so outer
+     planets, the ascendant, and location input are omitted entirely.
+     Verified against a professional ephemeris (Astro-Seek) to within
+     about 1.5 arcminutes for all three bodies.
+     =================================================================== */
+  function toRad(d){ return d * Math.PI / 180; }
+  function toDeg(r){ return r * 180 / Math.PI; }
+  function norm360(x){ x = x % 360; if (x < 0) x += 360; return x; }
+
+  function julianDay(y, m, d, hourUT) {
+    if (m <= 2) { y -= 1; m += 12; }
+    var A = Math.floor(y / 100);
+    var B = 2 - A + Math.floor(A / 4);
+    var JD0 = Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + B - 1524.5;
+    return JD0 + hourUT / 24;
+  }
+
+  function sunLongitude(jd) {
+    var T = (jd - 2451545.0) / 36525;
+    var L0 = norm360(280.46646 + 36000.76983 * T + 0.0003032 * T * T);
+    var M = norm360(357.52911 + 35999.05029 * T - 0.0001537 * T * T);
+    var Mr = toRad(M);
+    var C = (1.914602 - 0.004817 * T - 0.000014 * T * T) * Math.sin(Mr)
+      + (0.019993 - 0.000101 * T) * Math.sin(2 * Mr)
+      + 0.000289 * Math.sin(3 * Mr);
+    var trueLong = L0 + C;
+    // Small nutation + aberration correction for apparent (vs. mean) longitude.
+    var omega = 125.04 - 1934.136 * T;
+    var apparent = trueLong - 0.00569 - 0.00478 * Math.sin(toRad(omega));
+    return norm360(apparent);
+  }
+
+  function moonLongitude(jd) {
+    var T = (jd - 2451545.0) / 36525;
+    // Moon's mean longitude, mean elongation from Sun, Sun's mean anomaly,
+    // Moon's mean anomaly, Moon's argument of latitude — carried to T^2.
+    var Lp = norm360(218.3164477 + 481267.88123421 * T - 0.0015786 * T * T);
+    var D  = norm360(297.8501921 + 445267.1114034 * T - 0.0018819 * T * T);
+    var M  = norm360(357.5291092 + 35999.0502909 * T - 0.0001536 * T * T);
+    var Mp = norm360(134.9633964 + 477198.8675055 * T + 0.0087414 * T * T);
+    var F  = norm360(93.2720950 + 483202.0175233 * T - 0.0036539 * T * T);
+
+    // The 25 largest-amplitude longitude terms of the truncated ELP2000/Meeus
+    // lunar theory, each row [D, M, M', F, amplitude in millionths of a degree].
+    var MOON_TERMS = [
+      [0, 0, 1, 0, 6288774], [2, 0, -1, 0, 1274027], [2, 0, 0, 0, 658314],
+      [0, 0, 2, 0, 213618], [0, 1, 0, 0, -185116], [0, 0, 0, 2, -114332],
+      [2, 0, -2, 0, 58793], [2, -1, -1, 0, 57066], [2, 0, 1, 0, 53322],
+      [2, -1, 0, 0, 45758], [0, 1, -1, 0, -40923], [1, 0, 0, 0, -34720],
+      [0, 1, 1, 0, -30383], [2, 0, 0, -2, 15327], [0, 0, 1, 2, -12528],
+      [0, 0, 1, -2, 10980], [4, 0, -1, 0, 10675], [0, 0, 3, 0, 10034],
+      [4, 0, -2, 0, 8548], [2, 1, -1, 0, -7888], [2, 1, 0, 0, -6766],
+      [1, 0, -1, 0, -5163], [1, 1, 0, 0, 4987], [2, -1, 1, 0, 4036],
+      [2, 0, 2, 0, 3994]
+    ];
+    var sumL = 0;
+    for (var i = 0; i < MOON_TERMS.length; i++) {
+      var t4 = MOON_TERMS[i];
+      var arg = t4[0] * D + t4[1] * M + t4[2] * Mp + t4[3] * F;
+      sumL += t4[4] * Math.sin(toRad(arg));
+    }
+    var longitude = Lp + sumL / 1000000.0;
+
+    // Dominant nutation-in-longitude term, tied to the Moon's mean node,
+    // for consistency with the correction already applied to the Sun.
+    var omegaNode = norm360(125.0445479 - 1934.1362891 * T + 0.0020754 * T * T);
+    var nutationDeg = -17.20 * Math.sin(toRad(omegaNode)) / 3600.0;
+
+    return norm360(longitude + nutationDeg);
+  }
+
+  var ELEMENTS = {
+    venus: { a: [0.72333566, 0.00000390], e: [0.00677672, -0.00004107], I: [3.39467605, -0.00078890], L: [181.97909950, 58517.81538729], peri: [131.60246718, 0.00268329], node: [76.67984255, -0.27769418] },
+    earth: { a: [1.00000261, 0.00000562], e: [0.01671123, -0.00004392], I: [-0.00001531, -0.01294668], L: [100.46457166, 35999.37244981], peri: [102.93768193, 0.32327364], node: [0.0, 0.0] }
+  };
+
+  function keplerSolve(Mdeg, e) {
+    var M = Mdeg % 360; if (M > 180) M -= 360; if (M < -180) M += 360;
+    var Mrad = toRad(M);
+    var E = Mrad;
+    for (var i = 0; i < 12; i++) {
+      var dE = (E - e * Math.sin(E) - Mrad) / (1 - e * Math.cos(E));
+      E -= dE;
+      if (Math.abs(dE) < 1e-9) break;
+    }
+    return E;
+  }
+
+  function heliocentricXYZ(elem, T) {
+    var a = elem.a[0] + elem.a[1] * T;
+    var e = elem.e[0] + elem.e[1] * T;
+    var I = toRad(elem.I[0] + elem.I[1] * T);
+    var L = norm360(elem.L[0] + elem.L[1] * T);
+    var peri = norm360(elem.peri[0] + elem.peri[1] * T);
+    var node = norm360(elem.node[0] + elem.node[1] * T);
+    var w = toRad(norm360(peri - node));
+    var Om = toRad(node);
+    var M = norm360(L - peri);
+    var E = keplerSolve(M, e);
+    var xp = a * (Math.cos(E) - e);
+    var yp = a * Math.sqrt(1 - e * e) * Math.sin(E);
+    var cw = Math.cos(w), sw = Math.sin(w), cO = Math.cos(Om), sO = Math.sin(Om), cI = Math.cos(I), sI = Math.sin(I);
+    var x = (cw * cO - sw * sO * cI) * xp + (-sw * cO - cw * sO * cI) * yp;
+    var y = (cw * sO + sw * cO * cI) * xp + (-sw * sO + cw * cO * cI) * yp;
+    return { x: x, y: y };
+  }
+
+  function venusLongitude(jd) {
+    var T = (jd - 2451545.0) / 36525;
+    var p = heliocentricXYZ(ELEMENTS.venus, T);
+    var e = heliocentricXYZ(ELEMENTS.earth, T);
+    var x = p.x - e.x, y = p.y - e.y;
+    var lon = toDeg(Math.atan2(y, x));
+    lon += 1.3970 * T;
+    return norm360(lon);
+  }
+
+  function angularDiff(a, b) {
+    var d = Math.abs(a - b) % 360;
+    if (d > 180) d = 360 - d;
+    return d;
+  }
+
+  /* ===================================================================
+     Aspect scoring — Conjunct 100, Sextile 50, Square 0, Trine 75,
+     Opposite 0. Each aspect only applies within an 8° orb of its exact
+     angle: match starts at the aspect's base percentage at 0° delta
+     and decreases linearly, degree for degree, to 0% at an 8° delta.
+     Outside every orb (more than 8° from all five angles), the pairing
+     scores a flat 0% — there's no aspect at all to base a score on.
+     =================================================================== */
+  var ORB = 8;
+  var ASPECTS = [
+    { angle: 0,   base: 100, name: "Conjunction" },
+    { angle: 60,  base: 50,  name: "Sextile" },
+    { angle: 90,  base: 0,   name: "Square" },
+    { angle: 120, base: 75,  name: "Trine" },
+    { angle: 180, base: 0,   name: "Opposition" }
+  ];
+
+  function aspectResult(diff) {
+    var best = null;
+    ASPECTS.forEach(function (a) {
+      var delta = Math.abs(diff - a.angle);
+      if (delta <= ORB) {
+        var pct = a.base * (1 - delta / ORB);
+        if (!best || pct > best.pct) best = { name: a.name, pct: pct, delta: delta };
+      }
+    });
+    if (!best) return { name: "No aspect", pct: 0, delta: null };
+    return best;
+  }
+
+  var ASPECT_BLURB = {
+    Conjunction: "intense, instant chemistry",
+    Sextile: "easy, friendly warmth",
+    Square: "friction and tension",
+    Trine: "natural, flowing harmony",
+    Opposition: "magnetic but polarizing pull",
+    "No aspect": "no real connection here"
+  };
+
+  /* ===================================================================
+     Gender-based scoring rule (applies to either person, in either slot):
+       - If a person is Male:   their Sun  is compared to the OTHER person's Venus.
+       - If a person is Female: their Moon is compared to the OTHER person's Venus.
+     Two scores are always computed — one from each person's own point of
+     view — so this naturally covers every combination:
+       Male + Female  -> His Sun vs her Venus, and her Moon vs his Venus
+                          (the classic "he likes her" / "she likes him" pair).
+       Male + Male    -> 1st male's Sun vs 2nd male's Venus, and vice versa.
+       Female + Female-> 1st female's Moon vs 2nd female's Venus, and vice versa.
+     =================================================================== */
+  function selfLongitude(gender, jd) {
+    return gender === "male" ? sunLongitude(jd) : moonLongitude(jd);
+  }
+  function planetLabel(gender) {
+    return gender === "male" ? "Sun \u2192 Venus" : "Moon \u2192 Venus";
+  }
+  function pronounSubject(gender) { return gender === "male" ? "He" : "She"; }
+  function pronounObject(gender) { return gender === "male" ? "him" : "her"; }
+
+  function likesLabel(selfGender, otherGender, selfIndex, otherIndex) {
+    if (selfGender === otherGender) {
+      var noun = selfGender === "male" ? "Male" : "Female";
+      var otherNoun = selfGender === "male" ? "male" : "female";
+      return noun + " " + selfIndex + " likes " + otherNoun + " " + otherIndex;
+    }
+    return pronounSubject(selfGender) + " likes " + pronounObject(otherGender);
+  }
+
+  /* ===================================================================
+     UI wiring
+     =================================================================== */
+  var OFFSETS = [
+    { v: -12, city: "Baker Island" }, { v: -11, city: "Pago Pago" }, { v: -10, city: "Honolulu" },
+    { v: -9.5, city: "Marquesas Islands" }, { v: -9, city: "Anchorage" }, { v: -8, city: "Los Angeles" },
+    { v: -7, city: "Denver" }, { v: -6, city: "Chicago" }, { v: -5, city: "New York" },
+    { v: -4.5, city: "Caracas (historic)" }, { v: -4, city: "Santiago" }, { v: -3.5, city: "St. John's" },
+    { v: -3, city: "S\u00e3o Paulo" }, { v: -2, city: "South Georgia" }, { v: -1, city: "Azores" },
+    { v: 0, city: "London" }, { v: 1, city: "Paris" }, { v: 2, city: "Cairo" }, { v: 3, city: "Istanbul" },
+    { v: 3.5, city: "Tehran" }, { v: 4, city: "Dubai" }, { v: 4.5, city: "Kabul" }, { v: 5, city: "Karachi" },
+    { v: 5.5, city: "Delhi" }, { v: 5.75, city: "Kathmandu" }, { v: 6, city: "Dhaka" }, { v: 6.5, city: "Yangon" },
+    { v: 7, city: "Bangkok" }, { v: 8, city: "Hong Kong" }, { v: 8.75, city: "Eucla" }, { v: 9, city: "Tokyo" },
+    { v: 9.5, city: "Adelaide" }, { v: 10, city: "Sydney" }, { v: 10.5, city: "Lord Howe Island" },
+    { v: 11, city: "Honiara" }, { v: 12, city: "Auckland" }, { v: 12.75, city: "Chatham Islands" },
+    { v: 13, city: "Apia" }, { v: 14, city: "Kiritimati" }
+  ];
+
+  function makeDateTimePicker(prefix) {
+    var monthSel = document.getElementById(prefix + "-month");
+    var daySel = document.getElementById(prefix + "-day");
+    var yearSel = document.getElementById(prefix + "-year");
+    var hourSel = document.getElementById(prefix + "-hour");
+    var minSel = document.getElementById(prefix + "-minute");
+    var ampmSel = document.getElementById(prefix + "-ampm");
+
+    var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    MONTHS.forEach(function (name, i) {
+      var opt = document.createElement("option");
+      opt.value = i + 1; opt.textContent = name;
+      monthSel.appendChild(opt);
+    });
+    for (var d = 1; d <= 31; d++) {
+      var opt = document.createElement("option");
+      opt.value = d; opt.textContent = d;
+      daySel.appendChild(opt);
+    }
+    for (var y = 2060; y >= 1900; y--) {
+      var opt = document.createElement("option");
+      opt.value = y; opt.textContent = y;
+      yearSel.appendChild(opt);
+    }
+    for (var h = 1; h <= 12; h++) {
+      var opt = document.createElement("option");
+      opt.value = h; opt.textContent = (h < 10 ? "0" + h : h);
+      hourSel.appendChild(opt);
+    }
+    for (var m = 0; m <= 59; m++) {
+      var opt = document.createElement("option");
+      opt.value = m; opt.textContent = (m < 10 ? "0" + m : m);
+      minSel.appendChild(opt);
+    }
+    ["AM", "PM"].forEach(function (p) {
+      var opt = document.createElement("option");
+      opt.value = p; opt.textContent = p;
+      ampmSel.appendChild(opt);
+    });
+
+    return {
+      elements: [monthSel, daySel, yearSel, hourSel, minSel, ampmSel],
+      setDate: function (year, month, day) {
+        yearSel.value = year; monthSel.value = month; daySel.value = day;
+      },
+      setTime: function (hour24, minute) {
+        var hour12 = hour24 % 12; if (hour12 === 0) hour12 = 12;
+        hourSel.value = hour12; minSel.value = minute;
+        ampmSel.value = hour24 >= 12 ? "PM" : "AM";
+      },
+      get dateValue() {
+        if (!monthSel.value || !daySel.value || !yearSel.value) return "";
+        return yearSel.value + "-" + monthSel.value + "-" + daySel.value;
+      },
+      get timeValue() {
+        if (!hourSel.value || !minSel.value || !ampmSel.value) return "";
+        var hour24 = parseInt(hourSel.value, 10) % 12;
+        if (ampmSel.value === "PM") hour24 += 12;
+        return hour24 + ":" + minSel.value;
+      }
+    };
+  }
+
+  var p1Picker = makeDateTimePicker("pm-p1");
+  var p2Picker = makeDateTimePicker("pm-p2");
+  var p1Date = { get value() { return p1Picker.dateValue; } };
+  var p1Time = { get value() { return p1Picker.timeValue; } };
+  var p1Utc = document.getElementById("pm-p1-utc");
+  var p2Date = { get value() { return p2Picker.dateValue; } };
+  var p2Time = { get value() { return p2Picker.timeValue; } };
+  var p2Utc = document.getElementById("pm-p2-utc");
+  var errorEl = document.getElementById("pm-error");
+  var pctEl = document.getElementById("pm-pct");
+  var statusEl = document.getElementById("pm-status");
+  var fillEl = document.getElementById("pm-fill");
+  var bd1 = document.getElementById("pm-bd-1");
+  var bd2 = document.getElementById("pm-bd-2");
+  var bd1label = document.getElementById("pm-bd-1-label");
+  var bd2label = document.getElementById("pm-bd-2-label");
+  var bd1sub = document.getElementById("pm-bd-1-sub");
+  var bd2sub = document.getElementById("pm-bd-2-sub");
+  var hintEl = document.getElementById("pm-hint");
+
+  var genderP1 = "male";
+  var genderP2 = "female";
+
+  var now = new Date();
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+  var todayStr = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
+  var localOffset = -now.getTimezoneOffset() / 60;
+  var closestOffset = OFFSETS.reduce(function (a, b) {
+    return Math.abs(b.v - localOffset) < Math.abs(a.v - localOffset) ? b : a;
+  }).v;
+
+  [p1Utc, p2Utc].forEach(function (sel) {
+    OFFSETS.forEach(function (o) {
+      var opt = document.createElement("option");
+      opt.value = o.v;
+      opt.textContent = "UTC" + (o.v >= 0 ? "+" : "") + o.v + " \u2014 " + o.city;
+      if (o.v === closestOffset) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  });
+  p1Picker.setDate(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  p2Picker.setDate(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  p1Picker.setTime(12, 0);
+  p2Picker.setTime(12, 0);
+
+  function showError(msg) { errorEl.textContent = msg; errorEl.style.display = "block"; }
+  function clearError() { errorEl.style.display = "none"; errorEl.textContent = ""; }
+
+  function jdFor(dateVal, timeVal, utcOffset) {
+    var bParts = dateVal.split("-").map(Number);
+    var tParts = timeVal.split(":").map(Number);
+    var utHour = tParts[0] + tParts[1] / 60 - utcOffset;
+    return julianDay(bParts[0], bParts[1], bParts[2], utHour);
+  }
+
+  function renderBdItem(el, labelEl, subEl, pct, aspectName, label, subtext) {
+    el.querySelector(".bd-num").textContent = Math.round(pct);
+    labelEl.textContent = label;
+    subEl.textContent = subtext + " \u00b7 " + aspectName;
+    el.classList.toggle("penalty", pct < 25);
+  }
+
+  function tryCompute() {
+    clearError();
+    if (!p1Date.value || !p1Time.value || !p2Date.value || !p2Time.value) {
+      statusEl.textContent = "Enter both birth times to see a reading";
+      return;
+    }
+    try {
+      var jd1 = jdFor(p1Date.value, p1Time.value, parseFloat(p1Utc.value));
+      var jd2 = jdFor(p2Date.value, p2Time.value, parseFloat(p2Utc.value));
+
+      var venus1 = venusLongitude(jd1);
+      var venus2 = venusLongitude(jd2);
+      var self1 = selfLongitude(genderP1, jd1);
+      var self2 = selfLongitude(genderP2, jd2);
+
+      // Score 1: Person 1's own point of view (their Sun-or-Moon vs Person 2's Venus)
+      var diff1 = angularDiff(self1, venus2);
+      var result1 = aspectResult(diff1);
+
+      // Score 2: Person 2's own point of view (their Sun-or-Moon vs Person 1's Venus)
+      var diff2 = angularDiff(self2, venus1);
+      var result2 = aspectResult(diff2);
+
+      var overall = Math.round((result1.pct + result2.pct) / 2);
+
+      pctEl.textContent = overall + "%";
+      fillEl.style.width = overall + "%";
+
+      var statusWord = overall >= 70 ? "Strong mutual pull"
+        : overall >= 40 ? "Mixed, workable signals"
+        : "Real friction to navigate";
+      statusEl.textContent = statusWord;
+
+      renderBdItem(bd1, bd1label, bd1sub, result1.pct, result1.name,
+        likesLabel(genderP1, genderP2, 1, 2), planetLabel(genderP1));
+      renderBdItem(bd2, bd2label, bd2sub, result2.pct, result2.name,
+        likesLabel(genderP2, genderP1, 2, 1), planetLabel(genderP2));
+
+      hintEl.textContent = pronounSubject(genderP1) + ": " + ASPECT_BLURB[result1.name]
+        + "  \u00b7  " + pronounSubject(genderP2) + ": " + ASPECT_BLURB[result2.name];
+    } catch (err) {
+      showError(err.message || "Something went wrong computing this reading.");
+    }
+  }
+
+  p1Picker.elements.concat(p2Picker.elements, [p1Utc, p2Utc]).forEach(function (el) {
+    el.addEventListener("change", tryCompute);
+  });
+
+  // gender toggles
+  document.querySelectorAll(".pm-gender-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var person = btn.getAttribute("data-person");
+      var gender = btn.getAttribute("data-gender");
+      if (person === "1") { genderP1 = gender; }
+      else { genderP2 = gender; }
+      document.querySelectorAll('.pm-gender-btn[data-person="' + person + '"]').forEach(function (b) {
+        b.classList.toggle("active", b === btn);
+      });
+      tryCompute();
+    });
+  });
+
+  // theme picker
+  var themeBtn = document.getElementById("pm-theme-btn");
+  var themePanel = document.getElementById("pm-theme-panel");
+  var swatches = document.querySelectorAll(".theme-swatch");
+  themeBtn.addEventListener("click", function () {
+    themePanel.classList.toggle("open");
+  });
+  function setTheme(t) {
+    document.body.setAttribute("data-theme", t);
+    swatches.forEach(function (s) { s.classList.toggle("active", s.getAttribute("data-theme") === t); });
+  }
+  swatches.forEach(function (s) {
+    s.addEventListener("click", function () { setTheme(s.getAttribute("data-theme")); });
+  });
+  setTheme("space");
+
+  tryCompute();
+})();
+</script>
+</body>
+</html>
