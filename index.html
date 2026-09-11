@@ -11,9 +11,15 @@
   html,body{margin:0;padding:0;background:transparent;}
   #pw-shell{max-width:820px;margin:0 auto;padding:14px 10px 28px;}
 
-  /* ---- quick-glance row (big icons, top of page) ---- */
+  /* ---- quick-glance section (panel first, buttons below it) ---- */
+  #pw-quick{ margin-bottom:16px; }
+  .pw-quick-panel{ display:none; }
+  .pw-quick-panel.active{ display:block; }
+  .pw-quick-panel iframe{
+    width:100%; border:0; display:block; background:transparent; min-height:220px;
+  }
   #pw-quick-tabs{
-    display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:0 0 10px;
+    display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px;
   }
   .pw-quick-tab{
     width:64px; height:64px; border-radius:50%; border:1px solid var(--card-border);
@@ -24,12 +30,7 @@
   .pw-quick-tab:hover{ border-color:var(--accent); }
   .pw-quick-tab:active{ transform:scale(.95); }
   .pw-quick-tab.active{ background:var(--accent); border-color:var(--accent); color:var(--bg-0); }
-
-  .pw-quick-panel{ display:none; margin-bottom:16px; }
-  .pw-quick-panel.active{ display:block; }
-  .pw-quick-panel iframe{
-    width:100%; border:0; display:block; background:transparent; min-height:60px;
-  }
+  .pw-quick-tab svg{ width:26px; height:26px; }
 
   /* ---- shared birth profile card ---- */
   #pw-profile{
@@ -67,7 +68,7 @@
   #pw-profile.saved #pw-profile-form{ display:none; }
   #pw-profile.saved #pw-profile-summary{ display:flex; }
 
-  /* ---- icon-only detailed tab bar (now below birth info) ---- */
+  /* ---- icon-only detailed tab bar (below birth info; collapsed by default) ---- */
   #pw-tabs{
     display:flex; gap:6px; justify-content:center; flex-wrap:wrap;
     background:var(--card); border:1px solid var(--card-border); border-radius:999px;
@@ -82,8 +83,9 @@
   .pw-tab:hover{ border-color:var(--card-border); }
   .pw-tab:active{ transform:scale(.94); }
   .pw-tab.active{ background:var(--accent); border-color:var(--accent); color:var(--bg-0); }
+  .pw-tab svg{ width:20px; height:20px; }
 
-  /* ---- widget panels / iframes ---- */
+  /* ---- widget panels / iframes (collapsed until a tab is clicked) ---- */
   .pw-panel{ display:none; }
   .pw-panel.active{ display:block; }
   .pw-panel iframe{
@@ -96,24 +98,47 @@
 
 <div id="pw-shell">
 
-  <nav id="pw-quick-tabs" role="tablist" aria-label="Quick glance">
-    <button class="pw-quick-tab" data-quick="forecast" title="Forecast — live reading" aria-label="Forecast">📊</button>
-    <button class="pw-quick-tab" data-quick="location" title="Location" aria-label="Location">📍</button>
-    <button class="pw-quick-tab" data-quick="partner" title="Partner" aria-label="Partner">💞</button>
-    <button class="pw-quick-tab" data-quick="timeline" title="Timeline" aria-label="Timeline">📈</button>
-  </nav>
+  <div id="pw-quick">
+    <div class="pw-quick-panel" data-quick-panel="forecast">
+      <iframe src="widgets/meter/index.html" title="Forecast" loading="lazy"></iframe>
+    </div>
+    <div class="pw-quick-panel" data-quick-panel="location">
+      <iframe src="widgets/location-checker/index.html" title="Location" loading="lazy"></iframe>
+    </div>
+    <div class="pw-quick-panel" data-quick-panel="partner">
+      <iframe src="widgets/partner-match/index.html" title="Partner" loading="lazy"></iframe>
+    </div>
+    <div class="pw-quick-panel" data-quick-panel="timeline">
+      <iframe src="widgets/timeline/index.html" title="Timeline" loading="lazy"></iframe>
+    </div>
 
-  <div class="pw-quick-panel" data-quick-panel="forecast">
-    <iframe src="widgets/meter/index.html" title="Forecast" loading="lazy"></iframe>
-  </div>
-  <div class="pw-quick-panel" data-quick-panel="location">
-    <iframe src="widgets/location-checker/index.html" title="Location" loading="lazy"></iframe>
-  </div>
-  <div class="pw-quick-panel" data-quick-panel="partner">
-    <iframe src="widgets/partner-match/index.html" title="Partner" loading="lazy"></iframe>
-  </div>
-  <div class="pw-quick-panel" data-quick-panel="timeline">
-    <iframe src="widgets/timeline/index.html" title="Timeline" loading="lazy"></iframe>
+    <nav id="pw-quick-tabs" role="tablist" aria-label="Quick glance">
+      <button class="pw-quick-tab" data-quick="forecast" title="Forecast — live reading" aria-label="Forecast">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 15a8 8 0 0 1 16 0"/>
+          <line x1="12" y1="15" x2="16" y2="10"/>
+          <circle cx="12" cy="15" r="1.4" fill="currentColor" stroke="none"/>
+        </svg>
+      </button>
+      <button class="pw-quick-tab" data-quick="location" title="Location" aria-label="Location">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s7-7.58 7-12A7 7 0 0 0 5 10c0 4.42 7 12 7 12z"/>
+          <circle cx="12" cy="10" r="2.5"/>
+        </svg>
+      </button>
+      <button class="pw-quick-tab" data-quick="partner" title="Partner" aria-label="Partner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
+        </svg>
+      </button>
+      <button class="pw-quick-tab" data-quick="timeline" title="Timeline" aria-label="Timeline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="6" y1="20" x2="6" y2="14"/>
+          <line x1="12" y1="20" x2="12" y2="8"/>
+          <line x1="18" y1="20" x2="18" y2="4"/>
+        </svg>
+      </button>
+    </nav>
   </div>
 
   <div id="pw-profile">
@@ -176,12 +201,43 @@
   </div>
 
   <nav id="pw-tabs" role="tablist" aria-label="Choose a tool">
-    <button class="pw-tab" data-target="meter" title="Pluto Phases Meter (live reading)" aria-label="Pluto Phases Meter">📊</button>
-    <button class="pw-tab" data-target="happening" title="What Was Happening (single date)" aria-label="What Was Happening">🕰️</button>
-    <button class="pw-tab" data-target="where-when" title="Where &amp; When (life event finder)" aria-label="Where and When">🔎</button>
-    <button class="pw-tab" data-target="location-checker" title="Location Checker" aria-label="Location Checker">📍</button>
-    <button class="pw-tab" data-target="partner-match" title="Partner Match" aria-label="Partner Match">💞</button>
-    <button class="pw-tab" data-target="timeline" title="Pluto Phases Timeline (3-year)" aria-label="Pluto Phases Timeline">📈</button>
+    <button class="pw-tab" data-target="meter" title="Pluto Phases Meter (live reading)" aria-label="Pluto Phases Meter">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 15a8 8 0 0 1 16 0"/>
+        <line x1="12" y1="15" x2="16" y2="10"/>
+        <circle cx="12" cy="15" r="1.4" fill="currentColor" stroke="none"/>
+      </svg>
+    </button>
+    <button class="pw-tab" data-target="happening" title="What Was Happening (single date)" aria-label="What Was Happening">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"/>
+        <polyline points="12 7 12 12 16 14"/>
+      </svg>
+    </button>
+    <button class="pw-tab" data-target="where-when" title="Where &amp; When (life event finder)" aria-label="Where and When">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </button>
+    <button class="pw-tab" data-target="location-checker" title="Location Checker" aria-label="Location Checker">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s7-7.58 7-12A7 7 0 0 0 5 10c0 4.42 7 12 7 12z"/>
+        <circle cx="12" cy="10" r="2.5"/>
+      </svg>
+    </button>
+    <button class="pw-tab" data-target="partner-match" title="Partner Match" aria-label="Partner Match">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
+      </svg>
+    </button>
+    <button class="pw-tab" data-target="timeline" title="Pluto Phases Timeline (3-year)" aria-label="Pluto Phases Timeline">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="6" y1="20" x2="6" y2="14"/>
+        <line x1="12" y1="20" x2="12" y2="8"/>
+        <line x1="18" y1="20" x2="18" y2="4"/>
+      </svg>
+    </button>
   </nav>
 
   <div class="pw-panel" data-panel="meter">
@@ -212,9 +268,12 @@
   var STORAGE_KEY = "plutoWidgets.sharedBirthProfile";
   var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
   var DEFAULT_PROFILE = { month:1, day:1, year:1990, hour:12, minute:0, ampm:"PM", timeUnknown:false, place:"Kolkata, India" };
+  // Fixed stand-in "partner" so the Partner quick view always has a real
+  // reading to show, since a second person's data isn't collected up top.
+  var DEFAULT_PARTNER = { month:6, day:15, year:1988, hour:10, minute:30, ampm:"AM" };
 
   // =========================================================
-  // Detailed tab row (below birth info)
+  // Detailed tab row (below birth info) — collapsed by default
   // =========================================================
   var tabs = Array.prototype.slice.call(document.querySelectorAll(".pw-tab"));
   var panels = Array.prototype.slice.call(document.querySelectorAll(".pw-panel"));
@@ -222,40 +281,26 @@
   function activateTab(name){
     tabs.forEach(function(t){ t.classList.toggle("active", t.getAttribute("data-target") === name); });
     panels.forEach(function(p){ p.classList.toggle("active", p.getAttribute("data-panel") === name); });
-    try { localStorage.setItem("plutoWidgets.lastTab", name); } catch(e){}
   }
   tabs.forEach(function(t){
     t.addEventListener("click", function(){ activateTab(t.getAttribute("data-target")); });
   });
-  var initialTab = "meter";
-  try {
-    var stored = localStorage.getItem("plutoWidgets.lastTab");
-    if (stored && document.querySelector('.pw-panel[data-panel="' + stored + '"]')) initialTab = stored;
-  } catch(e){}
-  activateTab(initialTab);
+  // no panel active on load — user picks one
 
   // =========================================================
-  // Quick-glance row (big icons, top of page)
+  // Quick-glance section — always shows exactly one result
   // =========================================================
   var quickTabs = Array.prototype.slice.call(document.querySelectorAll(".pw-quick-tab"));
   var quickPanels = Array.prototype.slice.call(document.querySelectorAll(".pw-quick-panel"));
 
   function activateQuick(name){
-    var alreadyActive = quickTabs.some(function(t){
-      return t.getAttribute("data-quick") === name && t.classList.contains("active");
-    });
-    if (alreadyActive){
-      // tap again to close
-      quickTabs.forEach(function(t){ t.classList.remove("active"); });
-      quickPanels.forEach(function(p){ p.classList.remove("active"); });
-      return;
-    }
     quickTabs.forEach(function(t){ t.classList.toggle("active", t.getAttribute("data-quick") === name); });
     quickPanels.forEach(function(p){ p.classList.toggle("active", p.getAttribute("data-quick-panel") === name); });
   }
   quickTabs.forEach(function(t){
     t.addEventListener("click", function(){ activateQuick(t.getAttribute("data-quick")); });
   });
+  activateQuick("forecast"); // always one visible by default
 
   // =========================================================
   // Populate the shared birth-profile selects
@@ -384,6 +429,10 @@
       ["place","ptw-place"]
     ]
   };
+  var PARTNER2_MAP = [
+    ["month","pm-p2-month"], ["day","pm-p2-day"], ["year","pm-p2-year"],
+    ["hour","pm-p2-hour"], ["minute","pm-p2-minute"], ["ampm","pm-p2-ampm"]
+  ];
   // Same field mappings, reused for the quick-glance iframes.
   var QUICK_MAP = {
     "location": WIDGET_MAP["location-checker"],
@@ -432,6 +481,7 @@
     if (!p) return;
     var doc = getDoc(iframeEl);
     applyFieldMap(doc, p, WIDGET_MAP[panelName]);
+    if (panelName === "partner-match") applyFieldMap(doc, DEFAULT_PARTNER, PARTNER2_MAP);
   }
 
   function makeIframeBackgroundTransparent(iframeEl){
@@ -471,16 +521,17 @@
   // =========================================================
   // Quick-glance iframes: fill birth data, hide everything but
   // the result-bar section, auto-trigger a reading, keep sized
-  // to just that content.
+  // to just that content (with a stable minimum to reduce jump).
   // =========================================================
 
-  // hide-selectors per quick view, chosen so only the result
-  // section (already styled as a self-contained card) stays visible
+  // hide-selectors per quick view — only the result section
+  // (already a self-contained card) and, for timeline, its
+  // legend, stay visible. No interpretation/detail text.
   var QUICK_HIDE = {
-    "forecast": ["header",".collapsible-panel",".zodiac-card",".breakdown-card","footer"],
+    "forecast": ["header",".collapsible-panel",".zodiac-card",".breakdown-card","footer","#outOfRange"],
     "location": ["header",".zodiac-card","footer","#lc-error"],
     "partner": ["header",".collapsible-panel",".pm-two-col",".breakdown-card","footer","#pm-error"],
-    "timeline": ["header",".ppt-hint",".zodiac-card","footer"]
+    "timeline": ["header",".ppt-hint",".zodiac-card","footer","#ptw-detail"]
   };
 
   function injectCompactCss(doc, hideSelectors){
@@ -497,9 +548,12 @@
   }
 
   function autoSizeIframe(iframeEl, doc){
+    var lastH = 0;
     function sync(){
       try {
         var h = Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight);
+        if (Math.abs(h - lastH) < 6) return; // ignore sub-pixel/noise changes
+        lastH = h;
         iframeEl.style.height = (h + 4) + "px";
       } catch(e){}
     }
@@ -508,7 +562,6 @@
       var ro = new ResizeObserver(function(){ sync(); });
       ro.observe(doc.body);
     } catch(e){
-      // fallback if ResizeObserver isn't available
       setInterval(sync, 800);
     }
   }
@@ -560,6 +613,7 @@
     var doc = getDoc(iframeEl);
     if (!doc) return;
     if (QUICK_MAP[name]) applyFieldMap(doc, p, QUICK_MAP[name]);
+    if (name === "partner") applyFieldMap(doc, DEFAULT_PARTNER, PARTNER2_MAP);
     if (name === "forecast") triggerForecast(doc, p);
     if (name === "timeline") setTimeout(function(){ triggerTimeline(doc); }, 50);
   }
