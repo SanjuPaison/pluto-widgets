@@ -11,23 +11,25 @@
   html,body{margin:0;padding:0;background:transparent;}
   #pw-shell{max-width:820px;margin:0 auto;padding:14px 10px 28px;}
 
-  /* ---- icon-only tab bar ---- */
-  #pw-tabs{
-    display:flex; gap:6px; justify-content:center; flex-wrap:wrap;
-    background:var(--card); border:1px solid var(--card-border); border-radius:999px;
-    padding:6px; margin:0 0 14px;
+  /* ---- quick-glance row (big icons, top of page) ---- */
+  #pw-quick-tabs{
+    display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:0 0 10px;
   }
-  .pw-tab{
-    width:42px; height:42px; border-radius:50%; border:1px solid transparent;
-    background:transparent; font-size:19px; line-height:1; cursor:pointer;
+  .pw-quick-tab{
+    width:64px; height:64px; border-radius:50%; border:1px solid var(--card-border);
+    background:var(--card); font-size:26px; line-height:1; cursor:pointer;
     display:flex; align-items:center; justify-content:center;
     color:var(--text-hi); transition:background .15s, border-color .15s, transform .1s;
   }
-  .pw-tab:hover{ border-color:var(--card-border); }
-  .pw-tab:active{ transform:scale(.94); }
-  .pw-tab.active{ background:var(--accent); border-color:var(--accent); }
-  .pw-tab.active{ filter:none; }
-  .pw-tab.active{ color:var(--bg-0); }
+  .pw-quick-tab:hover{ border-color:var(--accent); }
+  .pw-quick-tab:active{ transform:scale(.95); }
+  .pw-quick-tab.active{ background:var(--accent); border-color:var(--accent); color:var(--bg-0); }
+
+  .pw-quick-panel{ display:none; margin-bottom:16px; }
+  .pw-quick-panel.active{ display:block; }
+  .pw-quick-panel iframe{
+    width:100%; border:0; display:block; background:transparent; min-height:60px;
+  }
 
   /* ---- shared birth profile card ---- */
   #pw-profile{
@@ -65,6 +67,22 @@
   #pw-profile.saved #pw-profile-form{ display:none; }
   #pw-profile.saved #pw-profile-summary{ display:flex; }
 
+  /* ---- icon-only detailed tab bar (now below birth info) ---- */
+  #pw-tabs{
+    display:flex; gap:6px; justify-content:center; flex-wrap:wrap;
+    background:var(--card); border:1px solid var(--card-border); border-radius:999px;
+    padding:6px; margin:0 0 14px;
+  }
+  .pw-tab{
+    width:42px; height:42px; border-radius:50%; border:1px solid transparent;
+    background:transparent; font-size:19px; line-height:1; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--text-hi); transition:background .15s, border-color .15s, transform .1s;
+  }
+  .pw-tab:hover{ border-color:var(--card-border); }
+  .pw-tab:active{ transform:scale(.94); }
+  .pw-tab.active{ background:var(--accent); border-color:var(--accent); color:var(--bg-0); }
+
   /* ---- widget panels / iframes ---- */
   .pw-panel{ display:none; }
   .pw-panel.active{ display:block; }
@@ -78,14 +96,25 @@
 
 <div id="pw-shell">
 
-  <nav id="pw-tabs" role="tablist" aria-label="Choose a tool">
-    <button class="pw-tab" data-target="meter" title="Pluto Phases Meter (live reading)" aria-label="Pluto Phases Meter">📊</button>
-    <button class="pw-tab" data-target="happening" title="What Was Happening (single date)" aria-label="What Was Happening">🕰️</button>
-    <button class="pw-tab" data-target="where-when" title="Where &amp; When (life event finder)" aria-label="Where and When">🔎</button>
-    <button class="pw-tab" data-target="location-checker" title="Location Checker" aria-label="Location Checker">📍</button>
-    <button class="pw-tab" data-target="partner-match" title="Partner Match" aria-label="Partner Match">💞</button>
-    <button class="pw-tab" data-target="timeline" title="Pluto Phases Timeline (3-year)" aria-label="Pluto Phases Timeline">📈</button>
+  <nav id="pw-quick-tabs" role="tablist" aria-label="Quick glance">
+    <button class="pw-quick-tab" data-quick="forecast" title="Forecast — live reading" aria-label="Forecast">📊</button>
+    <button class="pw-quick-tab" data-quick="location" title="Location" aria-label="Location">📍</button>
+    <button class="pw-quick-tab" data-quick="partner" title="Partner" aria-label="Partner">💞</button>
+    <button class="pw-quick-tab" data-quick="timeline" title="Timeline" aria-label="Timeline">📈</button>
   </nav>
+
+  <div class="pw-quick-panel" data-quick-panel="forecast">
+    <iframe src="widgets/meter/index.html" title="Forecast" loading="lazy"></iframe>
+  </div>
+  <div class="pw-quick-panel" data-quick-panel="location">
+    <iframe src="widgets/location-checker/index.html" title="Location" loading="lazy"></iframe>
+  </div>
+  <div class="pw-quick-panel" data-quick-panel="partner">
+    <iframe src="widgets/partner-match/index.html" title="Partner" loading="lazy"></iframe>
+  </div>
+  <div class="pw-quick-panel" data-quick-panel="timeline">
+    <iframe src="widgets/timeline/index.html" title="Timeline" loading="lazy"></iframe>
+  </div>
 
   <div id="pw-profile">
     <h2>Your Birth Details</h2>
@@ -146,6 +175,15 @@
     </div>
   </div>
 
+  <nav id="pw-tabs" role="tablist" aria-label="Choose a tool">
+    <button class="pw-tab" data-target="meter" title="Pluto Phases Meter (live reading)" aria-label="Pluto Phases Meter">📊</button>
+    <button class="pw-tab" data-target="happening" title="What Was Happening (single date)" aria-label="What Was Happening">🕰️</button>
+    <button class="pw-tab" data-target="where-when" title="Where &amp; When (life event finder)" aria-label="Where and When">🔎</button>
+    <button class="pw-tab" data-target="location-checker" title="Location Checker" aria-label="Location Checker">📍</button>
+    <button class="pw-tab" data-target="partner-match" title="Partner Match" aria-label="Partner Match">💞</button>
+    <button class="pw-tab" data-target="timeline" title="Pluto Phases Timeline (3-year)" aria-label="Pluto Phases Timeline">📈</button>
+  </nav>
+
   <div class="pw-panel" data-panel="meter">
     <iframe src="widgets/meter/index.html" title="Pluto Phases Meter" loading="lazy"></iframe>
   </div>
@@ -173,7 +211,11 @@
 
   var STORAGE_KEY = "plutoWidgets.sharedBirthProfile";
   var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var DEFAULT_PROFILE = { month:1, day:1, year:1990, hour:12, minute:0, ampm:"PM", timeUnknown:false, place:"Kolkata, India" };
 
+  // =========================================================
+  // Detailed tab row (below birth info)
+  // =========================================================
   var tabs = Array.prototype.slice.call(document.querySelectorAll(".pw-tab"));
   var panels = Array.prototype.slice.call(document.querySelectorAll(".pw-panel"));
 
@@ -192,7 +234,32 @@
   } catch(e){}
   activateTab(initialTab);
 
-  // ---------- populate the shared birth-profile selects ----------
+  // =========================================================
+  // Quick-glance row (big icons, top of page)
+  // =========================================================
+  var quickTabs = Array.prototype.slice.call(document.querySelectorAll(".pw-quick-tab"));
+  var quickPanels = Array.prototype.slice.call(document.querySelectorAll(".pw-quick-panel"));
+
+  function activateQuick(name){
+    var alreadyActive = quickTabs.some(function(t){
+      return t.getAttribute("data-quick") === name && t.classList.contains("active");
+    });
+    if (alreadyActive){
+      // tap again to close
+      quickTabs.forEach(function(t){ t.classList.remove("active"); });
+      quickPanels.forEach(function(p){ p.classList.remove("active"); });
+      return;
+    }
+    quickTabs.forEach(function(t){ t.classList.toggle("active", t.getAttribute("data-quick") === name); });
+    quickPanels.forEach(function(p){ p.classList.toggle("active", p.getAttribute("data-quick-panel") === name); });
+  }
+  quickTabs.forEach(function(t){
+    t.addEventListener("click", function(){ activateQuick(t.getAttribute("data-quick")); });
+  });
+
+  // =========================================================
+  // Populate the shared birth-profile selects
+  // =========================================================
   var monthSel = document.getElementById("pw-month");
   var daySel = document.getElementById("pw-day");
   var yearSel = document.getElementById("pw-year");
@@ -222,7 +289,9 @@
     var op = document.createElement("option"); op.value = p; op.textContent = p; ampmSel.appendChild(op);
   });
 
-  // ---------- load / save ----------
+  // =========================================================
+  // Load / save shared birth profile
+  // =========================================================
   var profileCard = document.getElementById("pw-profile");
   var summaryText = document.getElementById("pw-profile-summary-text");
 
@@ -237,7 +306,7 @@
   }
   function formatSummary(p){
     var monthName = MONTHS[(p.month|0) - 1] || "";
-    var timeStr = p.timeUnknown ? "time unknown" : (String(p.hour).padStart ? String(p.hour) : p.hour) + ":" + (p.minute < 10 ? "0" + p.minute : p.minute) + " " + p.ampm;
+    var timeStr = p.timeUnknown ? "time unknown" : p.hour + ":" + (p.minute < 10 ? "0" + p.minute : p.minute) + " " + p.ampm;
     return "<b>" + monthName + " " + p.day + ", " + p.year + "</b> &middot; " + timeStr + (p.place ? " &middot; " + p.place : "");
   }
   function fillFormFromProfile(p){
@@ -260,16 +329,16 @@
     };
   }
 
+  // If nothing saved yet, seed with a default profile and keep the
+  // panel collapsed rather than forcing the user to fill it in first.
   var existing = readProfile();
-  if (existing){
-    fillFormFromProfile(existing);
-    summaryText.innerHTML = formatSummary(existing);
-    profileCard.classList.add("saved");
-  } else {
-    // sensible defaults so the selects aren't blank
-    monthSel.value = "1"; daySel.value = "1"; yearSel.value = String(curYear - 30);
-    hourSel.value = "12"; minuteSel.value = "0"; ampmSel.value = "PM";
+  if (!existing){
+    existing = DEFAULT_PROFILE;
+    writeProfile(existing);
   }
+  fillFormFromProfile(existing);
+  summaryText.innerHTML = formatSummary(existing);
+  profileCard.classList.add("saved");
 
   document.getElementById("pw-profile-save").addEventListener("click", function(){
     if (!monthSel.value || !daySel.value || !yearSel.value){
@@ -280,14 +349,15 @@
     writeProfile(p);
     summaryText.innerHTML = formatSummary(p);
     profileCard.classList.add("saved");
-    applyProfileToAllIframes(p);
+    applyProfileToAllIframes();
   });
   document.getElementById("pw-profile-edit").addEventListener("click", function(){
     profileCard.classList.remove("saved");
   });
 
-  // ---------- push the profile into each widget's iframe ----------
-  // Field-mapping per widget. Each entry: { select: 'month'|'day'|'year'|'hour'|'minute'|'ampm'|'place'|'unknown', id: 'element-id-inside-that-iframe' }
+  // =========================================================
+  // Push the profile into each widget's iframe (detailed tabs)
+  // =========================================================
   var WIDGET_MAP = {
     "happening": [
       ["month","ppw-birth-month"], ["day","ppw-birth-day"], ["year","ppw-birth-year"],
@@ -314,6 +384,12 @@
       ["place","ptw-place"]
     ]
   };
+  // Same field mappings, reused for the quick-glance iframes.
+  var QUICK_MAP = {
+    "location": WIDGET_MAP["location-checker"],
+    "partner": WIDGET_MAP["partner-match"],
+    "timeline": WIDGET_MAP["timeline"]
+  };
 
   function fireEvents(el){
     if (!el) return;
@@ -323,16 +399,13 @@
     } catch(e){}
   }
 
-  function applyProfileToIframe(panelName, iframeEl){
-    var p = readProfile();
-    if (!p) return;
-    var map = WIDGET_MAP[panelName];
-    if (!map) return;
-    var doc;
-    try { doc = iframeEl.contentDocument || iframeEl.contentWindow.document; }
-    catch(e){ return; } // cross-origin fallback just does nothing
-    if (!doc) return;
+  function getDoc(iframeEl){
+    try { return iframeEl.contentDocument || iframeEl.contentWindow.document; }
+    catch(e){ return null; }
+  }
 
+  function applyFieldMap(doc, p, map){
+    if (!doc || !map) return;
     map.forEach(function(pair){
       var field = pair[0], id = pair[1];
       var el = doc.getElementById(id);
@@ -354,15 +427,20 @@
     });
   }
 
+  function applyProfileToIframe(panelName, iframeEl){
+    var p = readProfile();
+    if (!p) return;
+    var doc = getDoc(iframeEl);
+    applyFieldMap(doc, p, WIDGET_MAP[panelName]);
+  }
+
   function makeIframeBackgroundTransparent(iframeEl){
-    var doc;
-    try { doc = iframeEl.contentDocument || iframeEl.contentWindow.document; }
-    catch(e){ return; }
+    var doc = getDoc(iframeEl);
     if (!doc || !doc.head) return;
     try {
       var style = doc.createElement("style");
       style.setAttribute("data-injected", "pw-transparent-bg");
-      style.textContent = "html, body, .app { background: transparent !important; }";
+      style.textContent = "html, body { background: transparent !important; }";
       doc.head.appendChild(style);
     } catch(e){}
   }
@@ -373,6 +451,11 @@
       var iframe = panel.querySelector("iframe");
       if (iframe) applyProfileToIframe(name, iframe);
     });
+    quickPanels.forEach(function(panel){
+      var name = panel.getAttribute("data-quick-panel");
+      var iframe = panel.querySelector("iframe");
+      if (iframe) applyProfileToQuickIframe(name, iframe);
+    });
   }
 
   panels.forEach(function(panel){
@@ -382,6 +465,115 @@
     iframe.addEventListener("load", function(){
       applyProfileToIframe(name, iframe);
       makeIframeBackgroundTransparent(iframe);
+    });
+  });
+
+  // =========================================================
+  // Quick-glance iframes: fill birth data, hide everything but
+  // the result-bar section, auto-trigger a reading, keep sized
+  // to just that content.
+  // =========================================================
+
+  // hide-selectors per quick view, chosen so only the result
+  // section (already styled as a self-contained card) stays visible
+  var QUICK_HIDE = {
+    "forecast": ["header",".collapsible-panel",".zodiac-card",".breakdown-card","footer"],
+    "location": ["header",".zodiac-card","footer","#lc-error"],
+    "partner": ["header",".collapsible-panel",".pm-two-col",".breakdown-card","footer","#pm-error"],
+    "timeline": ["header",".ppt-hint",".zodiac-card","footer"]
+  };
+
+  function injectCompactCss(doc, hideSelectors){
+    if (!doc || !doc.head) return;
+    try {
+      var style = doc.createElement("style");
+      style.setAttribute("data-injected", "pw-compact");
+      style.textContent =
+        hideSelectors.join(",") + "{ display:none !important; }" +
+        ".app{ padding:12px !important; max-width:100% !important; }" +
+        ".meter-card{ margin-bottom:0 !important; }";
+      doc.head.appendChild(style);
+    } catch(e){}
+  }
+
+  function autoSizeIframe(iframeEl, doc){
+    function sync(){
+      try {
+        var h = Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight);
+        iframeEl.style.height = (h + 4) + "px";
+      } catch(e){}
+    }
+    sync();
+    try {
+      var ro = new ResizeObserver(function(){ sync(); });
+      ro.observe(doc.body);
+    } catch(e){
+      // fallback if ResizeObserver isn't available
+      setInterval(sync, 800);
+    }
+  }
+
+  function zodiacSignFromDate(month, day){
+    var ranges = [
+      ["Capricorn", 1, 19], ["Aquarius", 1, 20, 2, 18], ["Pisces", 2, 19, 3, 20],
+      ["Aries", 3, 21, 4, 19], ["Taurus", 4, 20, 5, 20], ["Gemini", 5, 21, 6, 20],
+      ["Cancer", 6, 21, 7, 22], ["Leo", 7, 23, 8, 22], ["Virgo", 8, 23, 9, 22],
+      ["Libra", 9, 23, 10, 22], ["Scorpio", 10, 23, 11, 21], ["Sagittarius", 11, 22, 12, 21],
+      ["Capricorn", 12, 22, 12, 31]
+    ];
+    for (var i = 0; i < ranges.length; i++){
+      var r = ranges[i];
+      if (r.length === 3){
+        if (month === r[1] && day <= r[2]) return r[0];
+      } else {
+        var startM = r[1], startD = r[2], endM = r[3], endD = r[4];
+        if ((month === startM && day >= startD) || (month === endM && day <= endD)) return r[0];
+      }
+    }
+    return "Aries";
+  }
+
+  function triggerForecast(doc, p){
+    if (!doc) return;
+    var sign = zodiacSignFromDate(p.month, p.day);
+    var wrap = doc.getElementById("zodiacRow");
+    if (!wrap) return;
+    var btn = Array.prototype.slice.call(wrap.children).filter(function(b){
+      return b.title === sign;
+    })[0];
+    if (btn && !btn.classList.contains("active")) btn.click();
+  }
+
+  function triggerTimeline(doc){
+    if (!doc) return;
+    var form = doc.getElementById("ptw-form");
+    if (!form) return;
+    try {
+      if (form.requestSubmit) form.requestSubmit();
+      else form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    } catch(e){}
+  }
+
+  function applyProfileToQuickIframe(name, iframeEl){
+    var p = readProfile();
+    if (!p) return;
+    var doc = getDoc(iframeEl);
+    if (!doc) return;
+    if (QUICK_MAP[name]) applyFieldMap(doc, p, QUICK_MAP[name]);
+    if (name === "forecast") triggerForecast(doc, p);
+    if (name === "timeline") setTimeout(function(){ triggerTimeline(doc); }, 50);
+  }
+
+  quickPanels.forEach(function(panel){
+    var name = panel.getAttribute("data-quick-panel");
+    var iframe = panel.querySelector("iframe");
+    if (!iframe) return;
+    iframe.addEventListener("load", function(){
+      var doc = getDoc(iframe);
+      makeIframeBackgroundTransparent(iframe);
+      injectCompactCss(doc, QUICK_HIDE[name] || []);
+      applyProfileToQuickIframe(name, iframe);
+      autoSizeIframe(iframe, doc);
     });
   });
 
