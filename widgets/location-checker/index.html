@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Location Checker</title>
+
+<!-- Shared Pluto widget visual system — see STYLE-GUIDE.md -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://sanjupaison.github.io/pluto-phases-meter/pluto-style.css">
+
+<style>
+  /* ------------------------------------------------------------
+     Widget-specific supplemental rules only. Nothing here hardcodes
+     a color — everything pulls from the shared theme variables
+     (--bg-1, --card-border, --text-hi, --text-lo, --text-faint,
+     --accent, --bg-0, --radius-sm) so it stays in sync with
+     whichever data-theme is set on <body>.
+     ------------------------------------------------------------ */
+
+  .lc-row { display: flex; gap: 10px; margin-bottom: 10px; }
+  .lc-row:last-child { margin-bottom: 0; }
+  .lc-field { flex: 1; min-width: 0; }
+  .lc-field label {
+    display: block; font-size: 11px; color: var(--text-faint);
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;
+  }
+
+  input[type="text"], select {
+    width: 100%; font-family: var(--font-body); font-weight: 300; font-size: 15px;
+    padding: 9px 11px; border: 1px solid var(--card-border); border-radius: var(--radius-sm);
+    background: var(--bg-1); color: var(--text-hi);
+  }
+  .lc-dob-row, .lc-tob-row { display: flex; gap: 6px; }
+  .lc-dob-row select, .lc-tob-row select {
+    width: 100%; font-family: var(--font-body); font-weight: 300; font-size: 15px;
+    padding: 9px 6px; border: 1px solid var(--card-border); border-radius: var(--radius-sm);
+    background: var(--bg-1); color: var(--text-hi);
+  }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .lc-location-label {
+    margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--card-border);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.6px;
+    color: var(--text-faint); font-weight: 700;
+  }
+
+  .lc-geo-row { display: flex; gap: 8px; margin-top: 8px; }
+  .lc-geo-row input { flex: 1; }
+  .lc-locate-btn { flex: 0 0 auto; padding: 0 16px; }
+  .lc-geo-status { font-size: 12px; margin-top: 6px; min-height: 1.1em; color: var(--text-faint); }
+  .lc-geo-status.lc-ok { color: #3fe0a0; }
+  .lc-geo-status.lc-err { color: #fca5a5; }
+
+  .lc-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+  .lc-chip {
+    font-family: var(--font-body); font-weight: 300; font-size: 13px; letter-spacing: 0.5px;
+    padding: 7px 13px; border-radius: 999px; border: 1px solid var(--card-border);
+    background: var(--bg-1); color: var(--text-lo); cursor: pointer;
+  }
+  .lc-chip.active { background: var(--accent); border-color: var(--accent); color: var(--bg-0); }
+
+  .lc-meter-loc { font-size: 17px; font-weight: 600; color: var(--text-hi); margin: 0 0 8px; }
+
+  .lc-tabs { display: flex; gap: 8px; margin-top: 16px; }
+  .lc-tab-box p { margin: 0 0 8px; font-size: 14.5px; color: var(--text-hi); }
+  .lc-tab-box p:last-child { margin-bottom: 0; }
+  .lc-sign-name { font-weight: 600; color: var(--accent); }
+  .lc-none { color: var(--text-faint); font-style: italic; }
+</style>
+</head>
+<body data-theme="space">
+
+<div class="app">
+
+  <header>
+    <div class="title-block"><h1>Location Checker</h1></div>
+  </header>
+
+  <div class="meter-card" id="lc-results"></div>
+
+  <div class="zodiac-card">
+    <form id="lc-form">
+      <div class="lc-row">
+        <div class="lc-field">
+          <label for="lc-bmonth">Date of birth</label>
+          <div class="lc-dob-row">
+            <select id="lc-bmonth" required><option value="" disabled selected>Month</option></select>
+            <select id="lc-bday" required><option value="" disabled selected>Day</option></select>
+            <select id="lc-byear" required><option value="" disabled selected>Year</option></select>
+          </div>
+        </div>
+        <div class="lc-field">
+          <label for="lc-bhour">Time of birth</label>
+          <div class="lc-tob-row">
+            <select id="lc-bhour" required><option value="" disabled selected>Hour</option></select>
+            <select id="lc-bminute" required><option value="" disabled selected>Min</option></select>
+            <select id="lc-bampm" required><option value="" disabled selected>AM/PM</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="lc-row">
+        <div class="lc-field">
+          <label for="lc-utc">UTC offset at birth (required)</label>
+          <select id="lc-utc"></select>
+        </div>
+      </div>
+
+      <p class="lc-location-label">Location</p>
+      <div class="lc-geo-row">
+        <input type="text" id="lc-place" placeholder="Type a city..." autocomplete="off">
+        <button type="button" class="toggle-btn lc-locate-btn" id="lc-geo-btn">Locate</button>
+      </div>
+      <div class="lc-geo-status" id="lc-geo-status"></div>
+      <div class="lc-chips" id="lc-city-chips"></div>
+    </form>
+  </div>
+
+  <div class="out-of-range" id="lc-error"></div>
+
+  <footer>
+    <a href="disclaimer.html" target="_blank" rel="noopener">Disclaimer</a>
+    <span class="sep">&middot;</span>
+    <a href="privacy.html" target="_blank" rel="noopener">Privacy</a>
+    <span class="sep">&middot;</span>
+    <a href="https://lifeprediction.net" target="_blank" rel="noopener">lifeprediction.net</a>
+  </footer>
+
+</div>
+
+<script src="ephemeris-data.js"></script>
+<script src="astro-engine.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // Endpoint for the hidden scoring logic (sign/degree, aspects, midpoints,
+  // percentage). Replace with your deployed Cloudflare Worker URL.
+  var COMPUTE_API_URL = "https://location-checker-api.sanjupaison.workers.dev/";
+
+  var CITIES = [
+    { name: "Bangkok", lat: 13.7563, lon: 100.5018 },
+    { name: "Hong Kong", lat: 22.3193, lon: 114.1694 },
+    { name: "London", lat: 51.5074, lon: -0.1278 },
+    { name: "Sydney", lat: -33.8688, lon: 151.2093 },
+    { name: "Shanghai", lat: 31.2304, lon: 121.4737 },
+    { name: "Tokyo", lat: 35.6762, lon: 139.6503 },
+    { name: "Istanbul", lat: 41.0082, lon: 28.9784 },
+    { name: "Dubai", lat: 25.2048, lon: 55.2708 },
+    { name: "Delhi", lat: 28.7041, lon: 77.1025 },
+    { name: "New York", lat: 40.7128, lon: -74.0060 },
+    { name: "Paris", lat: 48.8566, lon: 2.3522 },
+    { name: "Los Angeles", lat: 34.0522, lon: -118.2437 },
+    { name: "Cairo", lat: 30.0444, lon: 31.2357 },
+    { name: "Hanoi", lat: 21.0278, lon: 105.8342 },
+    { name: "Vancouver", lat: 49.2827, lon: -123.1207 },
+    { name: "S\u00e3o Paulo", lat: -23.5505, lon: -46.6333 },
+    { name: "Rome", lat: 41.9028, lon: 12.4964 }
+  ];
+  var DEFAULT_CITY = CITIES[2]; // London
+
+  var resultsEl = document.getElementById("lc-results");
+  var errorEl = document.getElementById("lc-error");
+  var utcSelect = document.getElementById("lc-utc");
+  var monthSelect = document.getElementById("lc-bmonth");
+  var daySelect = document.getElementById("lc-bday");
+  var yearSelect = document.getElementById("lc-byear");
+  var hourSelect = document.getElementById("lc-bhour");
+  var minuteSelect = document.getElementById("lc-bminute");
+  var ampmSelect = document.getElementById("lc-bampm");
+  var placeInput = document.getElementById("lc-place");
+  var geoBtn = document.getElementById("lc-geo-btn");
+  var geoStatus = document.getElementById("lc-geo-status");
+  var chipsEl = document.getElementById("lc-city-chips");
+
+  var currentLat = DEFAULT_CITY.lat, currentLon = DEFAULT_CITY.lon, currentLabel = DEFAULT_CITY.name;
+  var activeChip = null;
+  var activeTab = "sign";
+  var lastResult = null;
+
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+
+  // ---- populate the month/day/year and hour/minute/AM-PM dropdowns ----
+  var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  MONTHS.forEach(function (name, i) {
+    var opt = document.createElement("option");
+    opt.value = i + 1; opt.textContent = name;
+    monthSelect.appendChild(opt);
+  });
+  for (var d = 1; d <= 31; d++) {
+    var opt = document.createElement("option");
+    opt.value = d; opt.textContent = d;
+    daySelect.appendChild(opt);
+  }
+  for (var y = 2200; y >= 1900; y--) {
+    var opt = document.createElement("option");
+    opt.value = y; opt.textContent = y;
+    yearSelect.appendChild(opt);
+  }
+  for (var h = 1; h <= 12; h++) {
+    var opt = document.createElement("option");
+    opt.value = h; opt.textContent = pad(h);
+    hourSelect.appendChild(opt);
+  }
+  for (var m = 0; m <= 59; m++) {
+    var opt = document.createElement("option");
+    opt.value = m; opt.textContent = pad(m);
+    minuteSelect.appendChild(opt);
+  }
+  ["AM", "PM"].forEach(function (p) {
+    var opt = document.createElement("option");
+    opt.value = p; opt.textContent = p;
+    ampmSelect.appendChild(opt);
+  });
+
+  // ---- defaults: match the static example reading shown below (Jan 1,
+  // 2000, 12:00 PM, UTC+0, London) so the form and the sample result agree ----
+  monthSelect.value = 1;
+  daySelect.value = 1;
+  yearSelect.value = 2000;
+  hourSelect.value = 12;
+  minuteSelect.value = 0;
+  ampmSelect.value = "PM";
+
+  // UTC offset options, each paired with a major city on that offset, default
+  // to the browser's own local offset
+  var OFFSETS = [
+    { v: -12, city: "Baker Island" },
+    { v: -11, city: "Pago Pago" },
+    { v: -10, city: "Honolulu" },
+    { v: -9.5, city: "Marquesas Islands" },
+    { v: -9, city: "Anchorage" },
+    { v: -8, city: "Los Angeles" },
+    { v: -7, city: "Denver" },
+    { v: -6, city: "Chicago" },
+    { v: -5, city: "New York" },
+    { v: -4.5, city: "Caracas (historic)" },
+    { v: -4, city: "Santiago" },
+    { v: -3.5, city: "St. John's" },
+    { v: -3, city: "S\u00e3o Paulo" },
+    { v: -2, city: "South Georgia" },
+    { v: -1, city: "Azores" },
+    { v: 0, city: "London" },
+    { v: 1, city: "Paris" },
+    { v: 2, city: "Cairo" },
+    { v: 3, city: "Istanbul" },
+    { v: 3.5, city: "Tehran" },
+    { v: 4, city: "Dubai" },
+    { v: 4.5, city: "Kabul" },
+    { v: 5, city: "Karachi" },
+    { v: 5.5, city: "Delhi" },
+    { v: 5.75, city: "Kathmandu" },
+    { v: 6, city: "Dhaka" },
+    { v: 6.5, city: "Yangon" },
+    { v: 7, city: "Bangkok" },
+    { v: 8, city: "Hong Kong" },
+    { v: 8.75, city: "Eucla" },
+    { v: 9, city: "Tokyo" },
+    { v: 9.5, city: "Adelaide" },
+    { v: 10, city: "Sydney" },
+    { v: 10.5, city: "Lord Howe Island" },
+    { v: 11, city: "Honiara" },
+    { v: 12, city: "Auckland" },
+    { v: 12.75, city: "Chatham Islands" },
+    { v: 13, city: "Apia" },
+    { v: 14, city: "Kiritimati" }
+  ];
+  var closestOffset = 0; // default to UTC+0, matching the London example reading
+  OFFSETS.forEach(function (o) {
+    var opt = document.createElement("option");
+    opt.value = o.v;
+    opt.textContent = "UTC" + (o.v >= 0 ? "+" : "") + o.v + " \u2014 " + o.city;
+    if (o.v === closestOffset) opt.selected = true;
+    utcSelect.appendChild(opt);
+  });
+
+  // City chips
+  CITIES.forEach(function (c) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "lc-chip";
+    btn.textContent = c.name;
+    if (c === DEFAULT_CITY) { btn.classList.add("active"); activeChip = btn; }
+    btn.addEventListener("click", function () {
+      currentLat = c.lat; currentLon = c.lon; currentLabel = c.name;
+      placeInput.value = c.name;
+      geoStatus.textContent = "";
+      if (activeChip) activeChip.classList.remove("active");
+      btn.classList.add("active");
+      activeChip = btn;
+      tryCompute();
+    });
+    chipsEl.appendChild(btn);
+  });
+
+  function clearChipSelection() {
+    if (activeChip) { activeChip.classList.remove("active"); activeChip = null; }
+  }
+
+  placeInput.addEventListener("input", clearChipSelection);
+
+  geoBtn.addEventListener("click", function () {
+    var place = placeInput.value.trim();
+    // No new place typed (empty, or unchanged from the already-resolved
+    // location) — just recalculate with the current lat/lon. This lets
+    // "Locate" double as the general "recalculate now" action after
+    // changing the date/time fields, without re-hitting the geocoder.
+    if (!place || place === currentLabel) {
+      geoStatus.textContent = "";
+      tryCompute();
+      return;
+    }
+    geoStatus.textContent = "Searching...";
+    geoStatus.className = "lc-geo-status";
+    var url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(place);
+    fetch(url, { headers: { "Accept": "application/json" } })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (!res || res.length === 0) throw new Error("Could not find that place.");
+        currentLat = parseFloat(res[0].lat);
+        currentLon = parseFloat(res[0].lon);
+        currentLabel = res[0].display_name.split(",")[0];
+        clearChipSelection();
+        geoStatus.textContent = "Found: " + res[0].display_name;
+        geoStatus.className = "lc-geo-status lc-ok";
+        tryCompute();
+      })
+      .catch(function (err) {
+        geoStatus.textContent = err.message || "Could not find that place.";
+        geoStatus.className = "lc-geo-status lc-err";
+      });
+  });
+
+  // Date/time fields intentionally do NOT auto-recalculate (each change
+  // would hit the API). Press "Locate" to recalculate with the current
+  // location after adjusting them.
+
+  function showError(msg) { errorEl.textContent = msg; errorEl.className = "out-of-range show"; }
+  function clearError() { errorEl.className = "out-of-range"; errorEl.textContent = ""; }
+
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  function escapeHtml(s) {
+    var d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function tabContent(tab, r) {
+    if (tab === "sign") {
+      return '<p><span class="lc-sign-name">' + r.sign + '</span> &middot; ' + r.degInSign.toFixed(1) + '&deg; &mdash; ' + SIGN_TEXT[r.sign] + '</p>';
+    }
+    if (tab === "aspects") {
+      if (r.planetAspects.length === 0) return '<p class="lc-none">No natal planets closely aspect this point here.</p>';
+      return r.planetAspects.map(function (a) {
+        return '<p>' + cap(a.planet) + ' ' + ASPECT_TONE[a.aspect] + ' this point &mdash; ' + PLANET_INFO[a.planet] + '.</p>';
+      }).join("");
+    }
+    if (tab === "midpoints") {
+      if (r.midpointHits.length === 0) return '<p class="lc-none">No natal midpoints land here.</p>';
+      return r.midpointHits.map(function (m) {
+        return '<p>This point sits on your ' + cap(m.a) + '/' + cap(m.b) + ' midpoint &mdash; ' + PLANET_INFO[m.a] + ' meets ' + PLANET_INFO[m.b] + '.</p>';
+      }).join("");
+    }
+    return "";
+  }
+
+  function renderResults(r) {
+    lastResult = r;
+    var colorHex = r.pct <= 30 ? "#ff5c6c" : (r.pct >= 70 ? "#3fe0a0" : "#ffcf5c");
+    var word = r.pct <= 30 ? "Lower safety read" : (r.pct >= 70 ? "Higher safety read" : "Mixed safety read");
+
+    var html = "";
+    html += '<p class="lc-meter-loc">' + escapeHtml(r.locationLabel) + '</p>';
+    if (r.approximate) {
+      html += '<p class="lc-geo-status lc-err" style="margin:0 0 10px;">Precise ephemeris data failed to load — this reading uses lower-accuracy approximate calculations.</p>';
+    }
+    html += '<div class="meter-pct" style="color:' + colorHex + '">' + r.pct + '%</div>';
+    html += '<div class="meter-status" style="color:' + colorHex + '; font-weight:700; text-transform:uppercase; letter-spacing:1.5px;">' + word + '</div>';
+    html += '<div class="meter-track"><div class="meter-fill" style="width:' + r.pct + '%; background:' + colorHex + ';"></div></div>';
+    html += '<div class="meter-scale"><span>0</span><span>50</span><span>100</span></div>';
+
+    html += '<div class="gender-toggle lc-tabs">' +
+      '<button type="button" class="toggle-btn" data-tab="sign">Sign</button>' +
+      '<button type="button" class="toggle-btn" data-tab="aspects">Aspects</button>' +
+      '<button type="button" class="toggle-btn" data-tab="midpoints">Midpoints</button>' +
+      '</div>';
+    html += '<div class="collapsible-panel open lc-tab-box" id="lc-tab-box"></div>';
+    resultsEl.innerHTML = html;
+
+    var tabButtons = resultsEl.querySelectorAll(".toggle-btn");
+    tabButtons.forEach(function (btn) {
+      if (btn.getAttribute("data-tab") === activeTab) btn.classList.add("active");
+      btn.addEventListener("click", function () {
+        activeTab = btn.getAttribute("data-tab");
+        tabButtons.forEach(function (b) { b.classList.remove("active"); });
+        btn.classList.add("active");
+        document.getElementById("lc-tab-box").innerHTML = tabContent(activeTab, lastResult);
+      });
+    });
+    document.getElementById("lc-tab-box").innerHTML = tabContent(activeTab, r);
+  }
+
+  function tryCompute() {
+    clearError();
+    if (!monthSelect.value || !daySelect.value || !yearSelect.value ||
+        !hourSelect.value || !minuteSelect.value || !ampmSelect.value) return;
+
+    var bYear = parseInt(yearSelect.value, 10);
+    var bMonth = parseInt(monthSelect.value, 10);
+    var bDay = parseInt(daySelect.value, 10);
+    var hour24 = parseInt(hourSelect.value, 10) % 12;
+    if (ampmSelect.value === "PM") hour24 += 12;
+    var minute = parseInt(minuteSelect.value, 10);
+    var utcOffset = parseFloat(utcSelect.value);
+
+    try {
+      var utHour = hour24 + minute / 60 - utcOffset;
+      var jd = LCAstro.julianDay(bYear, bMonth, bDay, utHour);
+      var ascRelocated = LCAstro.ascendantLongitude(jd, currentLat, currentLon);
+      var natalInfo = LCAstro.getNatalLongitudes(jd); // { natal, approximate }
+
+      fetch(COMPUTE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ascRelocated: ascRelocated,
+          natal: natalInfo.natal,
+          approximate: natalInfo.approximate
+        })
+      })
+        .then(function (resp) {
+          if (!resp.ok) throw new Error("Server returned an error.");
+          return resp.json();
+        })
+        .then(function (result) {
+          result.locationLabel = currentLabel;
+          renderResults(result);
+        })
+        .catch(function (err) {
+          showError(err.message || "Something went wrong computing this reading.");
+        });
+    } catch (err) {
+      showError(err.message || "Something went wrong computing this reading.");
+    }
+  }
+
+  document.getElementById("lc-form").addEventListener("submit", function (e) { e.preventDefault(); tryCompute(); });
+
+  // ---- content tables ----
+  var SIGN_TEXT = {
+    "Aries": "Instincts run fast and protective here, which cuts both ways: you'll sense trouble quickly, but the same speed can push you into unfamiliar streets before you've really weighed it. Trust the gut call, just don't sprint past it.",
+    "Taurus": "A grounded, comfort-seeking read. You gravitate to established, well-worn areas and steady routines, which is generally a safe pattern &mdash; the risk is moving slowly to notice a place has changed.",
+    "Gemini": "Sharp and adaptable, quick to read a room and switch plans. The main vulnerability is distraction &mdash; heads up and phone down in unfamiliar blocks.",
+    "Cancer": "Home-and-safety instincts are heightened. You feel the mood of a place almost immediately, for better or worse; unfamiliar places can feel emotionally unsettling even when nothing is actually wrong.",
+    "Leo": "A confident, visible presence that can deter petty trouble &mdash; but also draws attention. Walk like you know where you're going, and keep valuables low-key.",
+    "Virgo": "Detail-oriented and exit-aware. You tend to plan routes and notice hazards before they matter, which is a genuine safety asset in this placement.",
+    "Libra": "Easy rapport with locals and strangers alike, but a pull toward smoothing things over. Speak up the moment something feels off instead of staying polite.",
+    "Scorpio": "Sharp instincts for hidden risk and reading intentions. Comfortable being alone or private, with steady composure if something does go wrong.",
+    "Sagittarius": "Adventurous and optimistic, drawn to the unfamiliar path. Great for exploring, but easy to underestimate risk &mdash; pair the wanderlust with basic precautions.",
+    "Capricorn": "Cautious and structured. You plan ahead and respect local rules, which generally keeps decision-making low-risk in new places.",
+    "Aquarius": "Independent and unconventional, happy to go off-script. Worth double-checking an area's reputation before improvising a route.",
+    "Pisces": "Intuitive but easily absorbed in your own world, which can mean losing track of surroundings or being an easier target for a con. A little extra grounding helps here."
+  };
+
+  var PLANET_INFO = {
+    sun: "visibility and confidence",
+    moon: "emotional comfort and routine",
+    mercury: "communication and quick thinking",
+    venus: "ease, charm and social connection",
+    mars: "energy, assertiveness and risk-taking",
+    jupiter: "opportunity and expansiveness",
+    saturn: "caution, structure and restriction",
+    uranus: "unpredictability and sudden change",
+    neptune: "confusion, illusion and vulnerability",
+    pluto: "intensity, power dynamics and transformation"
+  };
+
+  var ASPECT_TONE = {
+    Conjunction: "strongly colors",
+    Sextile: "gently supports",
+    Trine: "smoothly supports",
+    Square: "creates friction with",
+    Opposition: "pulls against"
+  };
+
+  // Static example reading, computed offline and hardcoded here — shown on
+  // load so the card isn't empty, without spending a request before the
+  // person has interacted with anything.
+  renderResults({
+    sign: "Sagittarius",
+    degInSign: 9.024666183537306,
+    pct: 90,
+    planetAspects: [{ planet: "pluto", aspect: "Conjunction", orb: 2.430333816462678 }],
+    midpointHits: [{ a: "moon", b: "mercury", orb: 1.4271661835373095 }],
+    approximate: false,
+    locationLabel: "London"
+  });
+})();
+</script>
+</body>
+</html>
