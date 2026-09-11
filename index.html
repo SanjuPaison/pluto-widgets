@@ -17,6 +17,12 @@
   .pw-quick-panel.active{ display:block; }
   .pw-quick-panel iframe{
     width:100%; border:0; display:block; background:transparent; min-height:220px;
+    visibility:hidden;
+  }
+  .pw-quick-panel iframe.pw-ready{ visibility:visible; }
+  .pw-quick-title{
+    text-align:center; font-family:var(--font-display); font-size:.78rem; letter-spacing:.25em;
+    text-transform:uppercase; color:var(--accent); margin:0 0 8px; font-weight:600;
   }
   #pw-quick-tabs{
     display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px;
@@ -100,15 +106,19 @@
 
   <div id="pw-quick">
     <div class="pw-quick-panel" data-quick-panel="forecast">
+      <div class="pw-quick-title">Forecast</div>
       <iframe src="widgets/meter/index.html" title="Forecast" loading="lazy"></iframe>
     </div>
     <div class="pw-quick-panel" data-quick-panel="location">
+      <div class="pw-quick-title">Location</div>
       <iframe src="widgets/location-checker/index.html" title="Location" loading="lazy"></iframe>
     </div>
     <div class="pw-quick-panel" data-quick-panel="partner">
+      <div class="pw-quick-title">Partner</div>
       <iframe src="widgets/partner-match/index.html" title="Partner" loading="lazy"></iframe>
     </div>
     <div class="pw-quick-panel" data-quick-panel="timeline">
+      <div class="pw-quick-title">Timeline</div>
       <iframe src="widgets/timeline/index.html" title="Timeline" loading="lazy"></iframe>
     </div>
 
@@ -279,6 +289,14 @@
   var panels = Array.prototype.slice.call(document.querySelectorAll(".pw-panel"));
 
   function activateTab(name){
+    var alreadyActive = tabs.some(function(t){
+      return t.getAttribute("data-target") === name && t.classList.contains("active");
+    });
+    if (alreadyActive){
+      tabs.forEach(function(t){ t.classList.remove("active"); });
+      panels.forEach(function(p){ p.classList.remove("active"); });
+      return;
+    }
     tabs.forEach(function(t){ t.classList.toggle("active", t.getAttribute("data-target") === name); });
     panels.forEach(function(p){ p.classList.toggle("active", p.getAttribute("data-panel") === name); });
   }
@@ -529,20 +547,25 @@
   // legend, stay visible. No interpretation/detail text.
   var QUICK_HIDE = {
     "forecast": ["header",".collapsible-panel",".zodiac-card",".breakdown-card","footer","#outOfRange"],
-    "location": ["header",".zodiac-card","footer","#lc-error"],
+    "location": ["header",".zodiac-card","footer","#lc-error",".lc-tabs","#lc-tab-box"],
     "partner": ["header",".collapsible-panel",".pm-two-col",".breakdown-card","footer","#pm-error"],
     "timeline": ["header",".ppt-hint",".zodiac-card","footer","#ptw-detail"]
   };
 
-  function injectCompactCss(doc, hideSelectors){
+  var QUICK_EXTRA_CSS = {
+    "timeline": "body{width:100% !important;} #ptw-timeline,.ppt-root,.ppt-track{width:100% !important; max-width:100% !important;}"
+  };
+
+  function injectCompactCss(doc, hideSelectors, extraCss){
     if (!doc || !doc.head) return;
     try {
       var style = doc.createElement("style");
       style.setAttribute("data-injected", "pw-compact");
       style.textContent =
         hideSelectors.join(",") + "{ display:none !important; }" +
-        ".app{ padding:12px !important; max-width:100% !important; }" +
-        ".meter-card{ margin-bottom:0 !important; }";
+        ".app{ padding:12px !important; max-width:100% !important; width:100% !important; }" +
+        ".meter-card{ margin-bottom:0 !important; }" +
+        (extraCss || "");
       doc.head.appendChild(style);
     } catch(e){}
   }
@@ -586,6 +609,12 @@
     return "Aries";
   }
 
+  function triggerLocationLocate(doc){
+    if (!doc) return;
+    var btn = doc.getElementById("lc-geo-btn");
+    if (btn) btn.click();
+  }
+
   function triggerForecast(doc, p){
     if (!doc) return;
     var sign = zodiacSignFromDate(p.month, p.day);
@@ -615,7 +644,11 @@
     if (QUICK_MAP[name]) applyFieldMap(doc, p, QUICK_MAP[name]);
     if (name === "partner") applyFieldMap(doc, DEFAULT_PARTNER, PARTNER2_MAP);
     if (name === "forecast") triggerForecast(doc, p);
-    if (name === "timeline") setTimeout(function(){ triggerTimeline(doc); }, 50);
+    if (name === "location") setTimeout(function(){ triggerLocationLocate(doc); }, 30);
+    if (name === "timeline") setTimeout(function(){
+      try { doc.defaultView.dispatchEvent(new Event("resize")); } catch(e){}
+      triggerTimeline(doc);
+    }, 150);
   }
 
   quickPanels.forEach(function(panel){
@@ -625,9 +658,12 @@
     iframe.addEventListener("load", function(){
       var doc = getDoc(iframe);
       makeIframeBackgroundTransparent(iframe);
-      injectCompactCss(doc, QUICK_HIDE[name] || []);
+      injectCompactCss(doc, QUICK_HIDE[name] || [], QUICK_EXTRA_CSS[name] || "");
       applyProfileToQuickIframe(name, iframe);
       autoSizeIframe(iframe, doc);
+      // reveal only once compacted + filled, to avoid a flash of the
+      // full (uncompacted) widget before our overrides apply
+      setTimeout(function(){ iframe.classList.add("pw-ready"); }, name === "timeline" ? 250 : 60);
     });
   });
 
