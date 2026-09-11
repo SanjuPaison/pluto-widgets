@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Pluto Phases Meter</title>
+<meta name="description" content="A live 0-100% situational reading, recalculated from the current moment.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pluto-style.css">
+</head>
+<body data-theme="space">
+
+<div class="app">
+
+  <header>
+    <div class="title-block">
+      <h1>Pluto Phases Meter</h1>
+    </div>
+    <div class="header-right">
+      <div class="clock-block" id="clockBlock" title="Change now/custom moment">
+        <div class="time" id="clockTime">--:--:--</div>
+        <div class="date" id="clockDate">----‑--‑--</div>
+      </div>
+      <button class="header-refresh-btn" id="headerRefreshBtn" title="Refresh" aria-label="Refresh reading">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="collapsible-panel" id="momentPanel">
+    <div class="datemode-toggle" id="dateModeToggle">
+      <button class="toggle-btn active" data-mode="now">Now (live)</button>
+      <button class="toggle-btn" data-mode="custom">Custom</button>
+    </div>
+    <div id="customDateFields" style="display:none;">
+      <div class="dt-row" style="margin-bottom:6px;">
+        <select id="customMonth"></select>
+        <select id="customDay"></select>
+        <select id="customYear"></select>
+      </div>
+      <div class="dt-row">
+        <select id="customHour"></select>
+        <select id="customMinute"></select>
+        <select id="customAmpm"></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="meter-card">
+    <div class="meter-pct" id="pctDisplay">--%</div>
+    <div class="meter-status" id="statusText">Reading the current moment…</div>
+    <div class="meter-track">
+      <div class="meter-fill" id="meterFill"></div>
+      <div class="meter-marker" style="left:30%"></div>
+      <div class="meter-marker" style="left:70%"></div>
+    </div>
+    <div class="meter-scale"><span>0</span><span>30</span><span>70</span><span>100</span></div>
+    <div class="out-of-range" id="outOfRange">This date falls outside 2017–2032 — the meter can't read it.</div>
+  </div>
+
+  <div class="zodiac-card">
+    <div class="gender-row" id="genderToggle">
+      <button class="toggle-btn active" data-gender="male">Male</button>
+      <button class="toggle-btn" data-gender="female">Female</button>
+    </div>
+    <div class="hint-box" id="genderHint">Use your Sun sign</div>
+    <div class="zodiac-row" id="zodiacRow"></div>
+  </div>
+
+  <div class="collapsible-panel" id="themePanel">
+    <div class="theme-grid" id="themeGrid"></div>
+  </div>
+
+  <div class="breakdown-card">
+    <div class="bd-grid" id="breakdownGrid"></div>
+  </div>
+
+  <footer>
+    <a href="disclaimer.html" target="_blank" rel="noopener">Disclaimer</a>
+    <span class="sep">·</span>
+    <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
+    <div class="disclaimer-line">For reflection and entertainment purposes only. Not a substitute for professional advice of any kind.</div>
+  </footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/astronomy-engine/astronomy.browser.min.js"></script>
+<script src="engine.js" defer></script>
+</body>
+</html>
