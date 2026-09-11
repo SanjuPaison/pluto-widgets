@@ -11,8 +11,18 @@
   html,body{margin:0;padding:0;background:transparent;}
   #pw-shell{max-width:820px;margin:0 auto;padding:14px 10px 28px;}
 
+  /* ---- single compact card: title + quick-glance + birth details ---- */
+  #pw-compact{
+    background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius,14px);
+    padding:16px; margin-bottom:20px;
+  }
+  #pw-compact-title{
+    text-align:center; font-family:var(--font-display); font-size:1.6rem; font-weight:700;
+    color:var(--text-hi); margin:0 0 14px;
+  }
+
   /* ---- quick-glance section (panel first, buttons below it) ---- */
-  #pw-quick{ margin-bottom:16px; }
+  #pw-quick{ margin-bottom:18px; }
   .pw-quick-panel{ display:none; }
   .pw-quick-panel.active{ display:block; }
   .pw-quick-panel iframe{
@@ -38,15 +48,15 @@
   .pw-quick-tab.active{ background:var(--accent); border-color:var(--accent); color:var(--bg-0); }
   .pw-quick-tab svg{ width:26px; height:26px; }
 
-  /* ---- shared birth profile card ---- */
+  /* ---- shared birth profile card (nested, no own background now) ---- */
   #pw-profile{
-    background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius, 14px);
-    padding:14px 16px; margin-bottom:16px; font-family:var(--font-body); color:var(--text-hi);
+    font-family:var(--font-body); color:var(--text-hi);
   }
   #pw-profile h2{
     font-family:var(--font-display); font-size:.78rem; letter-spacing:.25em; text-transform:uppercase;
     color:var(--accent); margin:0 0 10px; font-weight:600;
   }
+  #pw-profile h2.pw-sub-h2{ margin-top:18px; padding-top:14px; border-top:1px solid var(--card-border); }
   .pw-row{ display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
   .pw-row > div{ flex:1 1 70px; min-width:70px; }
   .pw-row label{ display:block; font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:1px; margin-bottom:3px; }
@@ -104,109 +114,144 @@
 
 <div id="pw-shell">
 
-  <div id="pw-quick">
-    <div class="pw-quick-panel" data-quick-panel="forecast">
-      <div class="pw-quick-title">Forecast</div>
-      <iframe src="widgets/meter/index.html" title="Forecast" loading="lazy"></iframe>
-    </div>
-    <div class="pw-quick-panel" data-quick-panel="location">
-      <div class="pw-quick-title">Location</div>
-      <iframe src="widgets/location-checker/index.html" title="Location" loading="lazy"></iframe>
-    </div>
-    <div class="pw-quick-panel" data-quick-panel="partner">
-      <div class="pw-quick-title">Partner</div>
-      <iframe src="widgets/partner-match/index.html" title="Partner" loading="lazy"></iframe>
-    </div>
-    <div class="pw-quick-panel" data-quick-panel="timeline">
-      <div class="pw-quick-title">Timeline</div>
-      <iframe src="widgets/timeline/index.html" title="Timeline" loading="lazy"></iframe>
+  <div id="pw-compact">
+    <div id="pw-compact-title">Pluto Widgets</div>
+
+    <div id="pw-quick">
+      <div class="pw-quick-panel" data-quick-panel="forecast">
+        <div class="pw-quick-title">Forecast</div>
+        <iframe src="widgets/meter/index.html" title="Forecast" loading="lazy"></iframe>
+      </div>
+      <div class="pw-quick-panel" data-quick-panel="location">
+        <div class="pw-quick-title">Location</div>
+        <iframe src="widgets/location-checker/index.html" title="Location" loading="lazy"></iframe>
+      </div>
+      <div class="pw-quick-panel" data-quick-panel="partner">
+        <div class="pw-quick-title">Partner</div>
+        <iframe src="widgets/partner-match/index.html" title="Partner" loading="lazy"></iframe>
+      </div>
+      <div class="pw-quick-panel" data-quick-panel="timeline">
+        <div class="pw-quick-title">Timeline</div>
+        <iframe src="widgets/timeline/index.html" title="Timeline" loading="lazy"></iframe>
+      </div>
+
+      <nav id="pw-quick-tabs" role="tablist" aria-label="Quick glance">
+        <button class="pw-quick-tab" data-quick="forecast" title="Forecast — live reading" aria-label="Forecast">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 15a8 8 0 0 1 16 0"/>
+            <line x1="12" y1="15" x2="16" y2="10"/>
+            <circle cx="12" cy="15" r="1.4" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+        <button class="pw-quick-tab" data-quick="location" title="Location" aria-label="Location">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s7-7.58 7-12A7 7 0 0 0 5 10c0 4.42 7 12 7 12z"/>
+            <circle cx="12" cy="10" r="2.5"/>
+          </svg>
+        </button>
+        <button class="pw-quick-tab" data-quick="partner" title="Partner" aria-label="Partner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
+          </svg>
+        </button>
+        <button class="pw-quick-tab" data-quick="timeline" title="Timeline" aria-label="Timeline">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="6" y1="20" x2="6" y2="14"/>
+            <line x1="12" y1="20" x2="12" y2="8"/>
+            <line x1="18" y1="20" x2="18" y2="4"/>
+          </svg>
+        </button>
+      </nav>
     </div>
 
-    <nav id="pw-quick-tabs" role="tablist" aria-label="Quick glance">
-      <button class="pw-quick-tab" data-quick="forecast" title="Forecast — live reading" aria-label="Forecast">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 15a8 8 0 0 1 16 0"/>
-          <line x1="12" y1="15" x2="16" y2="10"/>
-          <circle cx="12" cy="15" r="1.4" fill="currentColor" stroke="none"/>
-        </svg>
-      </button>
-      <button class="pw-quick-tab" data-quick="location" title="Location" aria-label="Location">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22s7-7.58 7-12A7 7 0 0 0 5 10c0 4.42 7 12 7 12z"/>
-          <circle cx="12" cy="10" r="2.5"/>
-        </svg>
-      </button>
-      <button class="pw-quick-tab" data-quick="partner" title="Partner" aria-label="Partner">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
-        </svg>
-      </button>
-      <button class="pw-quick-tab" data-quick="timeline" title="Timeline" aria-label="Timeline">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="6" y1="20" x2="6" y2="14"/>
-          <line x1="12" y1="20" x2="12" y2="8"/>
-          <line x1="18" y1="20" x2="18" y2="4"/>
-        </svg>
-      </button>
-    </nav>
-  </div>
+    <div id="pw-profile">
+      <h2>Your Birth Details</h2>
 
-  <div id="pw-profile">
-    <h2>Your Birth Details</h2>
-
-    <div id="pw-profile-form">
-      <div class="pw-row">
-        <div>
-          <label for="pw-month">Month</label>
-          <select id="pw-month"></select>
-        </div>
-        <div>
-          <label for="pw-day">Day</label>
-          <select id="pw-day"></select>
-        </div>
-        <div>
-          <label for="pw-year">Year</label>
-          <select id="pw-year"></select>
-        </div>
-      </div>
-      <div class="pw-row">
-        <div>
-          <label for="pw-hour">Hour</label>
-          <select id="pw-hour"></select>
-        </div>
-        <div>
-          <label for="pw-minute">Minute</label>
-          <select id="pw-minute"></select>
-        </div>
-        <div>
-          <label for="pw-ampm">AM/PM</label>
-          <select id="pw-ampm"></select>
-        </div>
-      </div>
-      <div class="pw-unknown">
-        <input type="checkbox" id="pw-time-unknown">
-        <label for="pw-time-unknown">I don't know my exact birth time</label>
-      </div>
-      <div class="pw-row">
-        <div style="flex:1 1 100%;">
-          <label for="pw-place">Birth place</label>
-          <div class="pw-place-row">
-            <input type="text" id="pw-place" placeholder="e.g. Kolkata, India" autocomplete="off">
+      <div id="pw-profile-form">
+        <div class="pw-row">
+          <div>
+            <label for="pw-month">Month</label>
+            <select id="pw-month"></select>
+          </div>
+          <div>
+            <label for="pw-day">Day</label>
+            <select id="pw-day"></select>
+          </div>
+          <div>
+            <label for="pw-year">Year</label>
+            <select id="pw-year"></select>
           </div>
         </div>
-      </div>
-      <button type="button" id="pw-profile-save">Save &amp; use everywhere</button>
-      <div id="pw-profile-note">
-        Saved only in this browser (localStorage) — never sent anywhere by this page.
-        Fills in automatically wherever a tool below needs birth details. Some tools
-        may still ask you to confirm the place (for time zone) or pick it from a
-        suggestion list the first time.
-      </div>
-    </div>
+        <div class="pw-row">
+          <div>
+            <label for="pw-hour">Hour</label>
+            <select id="pw-hour"></select>
+          </div>
+          <div>
+            <label for="pw-minute">Minute</label>
+            <select id="pw-minute"></select>
+          </div>
+          <div>
+            <label for="pw-ampm">AM/PM</label>
+            <select id="pw-ampm"></select>
+          </div>
+        </div>
+        <div class="pw-unknown">
+          <input type="checkbox" id="pw-time-unknown">
+          <label for="pw-time-unknown">I don't know my exact birth time</label>
+        </div>
+        <div class="pw-row">
+          <div style="flex:1 1 100%;">
+            <label for="pw-place">Birth place</label>
+            <div class="pw-place-row">
+              <input type="text" id="pw-place" placeholder="e.g. Kolkata, India" autocomplete="off">
+            </div>
+          </div>
+        </div>
 
-    <div id="pw-profile-summary">
-      <div class="pw-sum-text" id="pw-profile-summary-text"></div>
-      <button type="button" id="pw-profile-edit">Edit</button>
+        <h2 class="pw-sub-h2">Partner's Birth Details</h2>
+        <div class="pw-row">
+          <div>
+            <label for="pwp-month">Month</label>
+            <select id="pwp-month"></select>
+          </div>
+          <div>
+            <label for="pwp-day">Day</label>
+            <select id="pwp-day"></select>
+          </div>
+          <div>
+            <label for="pwp-year">Year</label>
+            <select id="pwp-year"></select>
+          </div>
+        </div>
+        <div class="pw-row">
+          <div>
+            <label for="pwp-hour">Hour</label>
+            <select id="pwp-hour"></select>
+          </div>
+          <div>
+            <label for="pwp-minute">Minute</label>
+            <select id="pwp-minute"></select>
+          </div>
+          <div>
+            <label for="pwp-ampm">AM/PM</label>
+            <select id="pwp-ampm"></select>
+          </div>
+        </div>
+
+        <button type="button" id="pw-profile-save">Save</button>
+        <div id="pw-profile-note">
+          Saved only in this browser (localStorage) — never sent anywhere by this page.
+          Fills in automatically wherever a tool below needs birth details. Some tools
+          may still ask you to confirm the place (for time zone) or pick it from a
+          suggestion list the first time.
+        </div>
+      </div>
+
+      <div id="pw-profile-summary">
+        <div class="pw-sum-text" id="pw-profile-summary-text"></div>
+        <button type="button" id="pw-profile-edit">Edit</button>
+      </div>
     </div>
   </div>
 
@@ -216,18 +261,6 @@
         <path d="M4 15a8 8 0 0 1 16 0"/>
         <line x1="12" y1="15" x2="16" y2="10"/>
         <circle cx="12" cy="15" r="1.4" fill="currentColor" stroke="none"/>
-      </svg>
-    </button>
-    <button class="pw-tab" data-target="happening" title="What Was Happening (single date)" aria-label="What Was Happening">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="9"/>
-        <polyline points="12 7 12 12 16 14"/>
-      </svg>
-    </button>
-    <button class="pw-tab" data-target="where-when" title="Where &amp; When (life event finder)" aria-label="Where and When">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="7"/>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
     </button>
     <button class="pw-tab" data-target="location-checker" title="Location Checker" aria-label="Location Checker">
@@ -246,6 +279,18 @@
         <line x1="6" y1="20" x2="6" y2="14"/>
         <line x1="12" y1="20" x2="12" y2="8"/>
         <line x1="18" y1="20" x2="18" y2="4"/>
+      </svg>
+    </button>
+    <button class="pw-tab" data-target="happening" title="What Was Happening (single date)" aria-label="What Was Happening">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"/>
+        <polyline points="12 7 12 12 16 14"/>
+      </svg>
+    </button>
+    <button class="pw-tab" data-target="where-when" title="Where &amp; When (life event finder)" aria-label="Where and When">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
     </button>
   </nav>
@@ -276,10 +321,10 @@
   "use strict";
 
   var STORAGE_KEY = "plutoWidgets.sharedBirthProfile";
+  var PARTNER_STORAGE_KEY = "plutoWidgets.partnerProfile";
   var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
   var DEFAULT_PROFILE = { month:1, day:1, year:1990, hour:12, minute:0, ampm:"PM", timeUnknown:false, place:"Kolkata, India" };
-  // Fixed stand-in "partner" so the Partner quick view always has a real
-  // reading to show, since a second person's data isn't collected up top.
+  // Default partner profile, editable in the Partner's Birth Details section.
   var DEFAULT_PARTNER = { month:6, day:15, year:1988, hour:10, minute:30, ampm:"AM" };
 
   // =========================================================
@@ -352,6 +397,33 @@
     var op = document.createElement("option"); op.value = p; op.textContent = p; ampmSel.appendChild(op);
   });
 
+  // Partner selects (same option lists, separate elements)
+  var pMonthSel = document.getElementById("pwp-month");
+  var pDaySel = document.getElementById("pwp-day");
+  var pYearSel = document.getElementById("pwp-year");
+  var pHourSel = document.getElementById("pwp-hour");
+  var pMinuteSel = document.getElementById("pwp-minute");
+  var pAmpmSel = document.getElementById("pwp-ampm");
+
+  MONTHS.forEach(function(name, i){
+    var o = document.createElement("option"); o.value = i + 1; o.textContent = name; pMonthSel.appendChild(o);
+  });
+  for (var pd = 1; pd <= 31; pd++){
+    var pod = document.createElement("option"); pod.value = pd; pod.textContent = pd; pDaySel.appendChild(pod);
+  }
+  for (var py = curYear; py >= 1930; py--){
+    var poy = document.createElement("option"); poy.value = py; poy.textContent = py; pYearSel.appendChild(poy);
+  }
+  for (var ph = 1; ph <= 12; ph++){
+    var poh = document.createElement("option"); poh.value = ph; poh.textContent = (ph < 10 ? "0" + ph : ph); pHourSel.appendChild(poh);
+  }
+  for (var pm = 0; pm <= 59; pm++){
+    var pom = document.createElement("option"); pom.value = pm; pom.textContent = (pm < 10 ? "0" + pm : pm); pMinuteSel.appendChild(pom);
+  }
+  ["AM","PM"].forEach(function(p){
+    var pop = document.createElement("option"); pop.value = p; pop.textContent = p; pAmpmSel.appendChild(pop);
+  });
+
   // =========================================================
   // Load / save shared birth profile
   // =========================================================
@@ -367,10 +439,25 @@
   function writeProfile(p){
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); } catch(e){}
   }
-  function formatSummary(p){
+  function readPartnerProfile(){
+    try {
+      var raw = localStorage.getItem(PARTNER_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e){ return null; }
+  }
+  function writePartnerProfile(p){
+    try { localStorage.setItem(PARTNER_STORAGE_KEY, JSON.stringify(p)); } catch(e){}
+  }
+  function formatSummary(p, partner){
     var monthName = MONTHS[(p.month|0) - 1] || "";
     var timeStr = p.timeUnknown ? "time unknown" : p.hour + ":" + (p.minute < 10 ? "0" + p.minute : p.minute) + " " + p.ampm;
-    return "<b>" + monthName + " " + p.day + ", " + p.year + "</b> &middot; " + timeStr + (p.place ? " &middot; " + p.place : "");
+    var out = "<b>" + monthName + " " + p.day + ", " + p.year + "</b> &middot; " + timeStr + (p.place ? " &middot; " + p.place : "");
+    if (partner){
+      var pMonthName = MONTHS[(partner.month|0) - 1] || "";
+      var pTimeStr = partner.hour + ":" + (partner.minute < 10 ? "0" + partner.minute : partner.minute) + " " + partner.ampm;
+      out += "<br>Partner: <b>" + pMonthName + " " + partner.day + ", " + partner.year + "</b> &middot; " + pTimeStr;
+    }
+    return out;
   }
   function fillFormFromProfile(p){
     if (!p) return;
@@ -378,6 +465,11 @@
     hourSel.value = p.hour; minuteSel.value = p.minute; ampmSel.value = p.ampm;
     unknownBox.checked = !!p.timeUnknown;
     placeInput.value = p.place || "";
+  }
+  function fillPartnerFormFromProfile(p){
+    if (!p) return;
+    pMonthSel.value = p.month; pDaySel.value = p.day; pYearSel.value = p.year;
+    pHourSel.value = p.hour; pMinuteSel.value = p.minute; pAmpmSel.value = p.ampm;
   }
   function currentProfile(){
     return {
@@ -391,16 +483,32 @@
       place: placeInput.value.trim()
     };
   }
+  function currentPartnerProfile(){
+    return {
+      month: parseInt(pMonthSel.value, 10),
+      day: parseInt(pDaySel.value, 10),
+      year: parseInt(pYearSel.value, 10),
+      hour: parseInt(pHourSel.value, 10),
+      minute: parseInt(pMinuteSel.value, 10),
+      ampm: pAmpmSel.value
+    };
+  }
 
-  // If nothing saved yet, seed with a default profile and keep the
-  // panel collapsed rather than forcing the user to fill it in first.
+  // If nothing saved yet, seed with defaults and keep the panel
+  // collapsed rather than forcing the user to fill it in first.
   var existing = readProfile();
   if (!existing){
     existing = DEFAULT_PROFILE;
     writeProfile(existing);
   }
+  var existingPartner = readPartnerProfile();
+  if (!existingPartner){
+    existingPartner = DEFAULT_PARTNER;
+    writePartnerProfile(existingPartner);
+  }
   fillFormFromProfile(existing);
-  summaryText.innerHTML = formatSummary(existing);
+  fillPartnerFormFromProfile(existingPartner);
+  summaryText.innerHTML = formatSummary(existing, existingPartner);
   profileCard.classList.add("saved");
 
   document.getElementById("pw-profile-save").addEventListener("click", function(){
@@ -409,8 +517,10 @@
       return;
     }
     var p = currentProfile();
+    var partner = currentPartnerProfile();
     writeProfile(p);
-    summaryText.innerHTML = formatSummary(p);
+    writePartnerProfile(partner);
+    summaryText.innerHTML = formatSummary(p, partner);
     profileCard.classList.add("saved");
     applyProfileToAllIframes();
   });
@@ -494,12 +604,52 @@
     });
   }
 
+  // Birth-related input fields/buttons in the bottom (detailed) tools
+  // are hidden here since Birth Details up top now drives them —
+  // only each tool's own non-birth controls and results stay visible.
+  var DETAIL_HIDE = {
+    "meter": [".zodiac-card"],
+    "happening": ["#ppw-form fieldset:nth-of-type(2)"],
+    "where-when": ["#ww-birth-panel > .ww-field"],
+    "location-checker": [".zodiac-card"],
+    "partner-match": [".pm-two-col"],
+    "timeline": [".zodiac-card"]
+  };
+
+  function injectDetailCompact(doc, hideSelectors){
+    if (!doc || !doc.head || !hideSelectors || !hideSelectors.length) return;
+    try {
+      var style = doc.createElement("style");
+      style.setAttribute("data-injected", "pw-detail-relocate");
+      style.textContent = hideSelectors.join(",") + "{ display:none !important; }";
+      doc.head.appendChild(style);
+    } catch(e){}
+  }
+
+  function triggerWhereWhenLocate(doc){
+    if (!doc) return;
+    var btn = doc.getElementById("ww-locate-btn");
+    if (btn) btn.click();
+  }
+
+  function autoTriggerDetail(name, doc, p){
+    if (name === "meter") triggerForecast(doc, p);
+    if (name === "location-checker") setTimeout(function(){ triggerLocationLocate(doc); }, 30);
+    if (name === "where-when") setTimeout(function(){ triggerWhereWhenLocate(doc); }, 30);
+    if (name === "timeline") setTimeout(function(){
+      try { doc.defaultView.dispatchEvent(new Event("resize")); } catch(e){}
+      triggerTimeline(doc);
+    }, 150);
+  }
+
   function applyProfileToIframe(panelName, iframeEl){
     var p = readProfile();
     if (!p) return;
     var doc = getDoc(iframeEl);
     applyFieldMap(doc, p, WIDGET_MAP[panelName]);
-    if (panelName === "partner-match") applyFieldMap(doc, DEFAULT_PARTNER, PARTNER2_MAP);
+    if (panelName === "partner-match") applyFieldMap(doc, readPartnerProfile() || DEFAULT_PARTNER, PARTNER2_MAP);
+    injectDetailCompact(doc, DETAIL_HIDE[panelName]);
+    autoTriggerDetail(panelName, doc, p);
   }
 
   function makeIframeBackgroundTransparent(iframeEl){
@@ -642,7 +792,7 @@
     var doc = getDoc(iframeEl);
     if (!doc) return;
     if (QUICK_MAP[name]) applyFieldMap(doc, p, QUICK_MAP[name]);
-    if (name === "partner") applyFieldMap(doc, DEFAULT_PARTNER, PARTNER2_MAP);
+    if (name === "partner") applyFieldMap(doc, readPartnerProfile() || DEFAULT_PARTNER, PARTNER2_MAP);
     if (name === "forecast") triggerForecast(doc, p);
     if (name === "location") setTimeout(function(){ triggerLocationLocate(doc); }, 30);
     if (name === "timeline") setTimeout(function(){
