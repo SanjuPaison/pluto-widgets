@@ -21,7 +21,7 @@
   #pw-quick{ margin-bottom:18px; }
   #pw-quick-results{
     height:360px; overflow-y:auto; overflow-x:hidden; margin-bottom:10px;
-    border-radius:var(--radius-sm,8px);
+    border-radius:var(--radius-sm,8px); scrollbar-gutter:stable;
   }
   .pw-quick-panel{ display:none; }
   .pw-quick-panel.active{ display:block; }
@@ -1126,13 +1126,21 @@
     if (btn) btn.click();
   }
 
+  function triggerHappeningLocate(doc){
+    if (!doc) return;
+    var btn = doc.getElementById("ppw-geo-btn");
+    if (btn) btn.click();
+  }
+
   function autoTriggerDetail(name, doc){
     if (name === "meter") applyMeterProfileToDoc(doc);
     if (name === "location-checker"){
       applyCurrentLocationToDoc(doc);
-      setTimeout(function(){ triggerLocationLocate(doc); }, 30);
+      var loc = readCurrentLocation() || DEFAULT_CURRENT_LOCATION;
+      setTimeout(function(){ triggerLocationLocate(doc, loc.place); }, 30);
     }
     if (name === "where-when") setTimeout(function(){ triggerWhereWhenLocate(doc); }, 30);
+    if (name === "happening") setTimeout(function(){ triggerHappeningLocate(doc); }, 30);
     if (name === "timeline") setTimeout(function(){
       try { doc.defaultView.dispatchEvent(new Event("resize")); } catch(e){}
       triggerTimeline(doc);
@@ -1257,8 +1265,25 @@
     return "Aries";
   }
 
-  function triggerLocationLocate(doc){
+  // Prefer an exact-match city chip inside the widget (instant, uses its
+  // own hardcoded coordinates) over the generic Locate button, which always
+  // does a live Nominatim search — slower, and can resolve to a slightly
+  // different label (e.g. "London" typed in but "Greater London" returned).
+  function findMatchingCityChip(doc, placeName){
+    if (!placeName) return null;
+    var wrap = doc.getElementById("lc-city-chips");
+    if (!wrap) return null;
+    var norm = placeName.trim().toLowerCase();
+    return Array.prototype.slice.call(wrap.children).filter(function(b){
+      var name = (b.textContent || "").trim().toLowerCase();
+      return name && (norm === name || norm.indexOf(name + ",") === 0 || norm.indexOf(name) === 0);
+    })[0] || null;
+  }
+
+  function triggerLocationLocate(doc, placeName){
     if (!doc) return;
+    var chip = findMatchingCityChip(doc, placeName);
+    if (chip){ chip.click(); return; }
     var btn = doc.getElementById("lc-geo-btn");
     if (btn) btn.click();
   }
@@ -1294,7 +1319,8 @@
     if (name === "forecast") applyMeterProfileToDoc(doc);
     if (name === "location"){
       applyCurrentLocationToDoc(doc);
-      setTimeout(function(){ triggerLocationLocate(doc); }, 30);
+      var loc = readCurrentLocation() || DEFAULT_CURRENT_LOCATION;
+      setTimeout(function(){ triggerLocationLocate(doc, loc.place); }, 30);
     }
     if (name === "timeline") setTimeout(function(){
       try { doc.defaultView.dispatchEvent(new Event("resize")); } catch(e){}
