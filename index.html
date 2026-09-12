@@ -134,19 +134,21 @@
       <div id="pw-quick-results">
         <div class="pw-quick-panel" data-quick-panel="forecast">
           <div class="pw-quick-title">Forecast</div>
-          <iframe src="widgets/meter/index.html" title="Forecast" loading="lazy"></iframe>
+          <iframe data-src="widgets/meter/index.html" title="Forecast"></iframe>
         </div>
         <div class="pw-quick-panel" data-quick-panel="location">
           <div class="pw-quick-title">Location</div>
-          <iframe src="widgets/location-checker/index.html" title="Location" loading="lazy"></iframe>
+          <div id="pw-location-quick-slot">
+            <iframe id="pw-shared-location-iframe" data-src="widgets/location-checker/index.html" title="Location"></iframe>
+          </div>
         </div>
         <div class="pw-quick-panel" data-quick-panel="partner">
           <div class="pw-quick-title">Partner</div>
-          <iframe src="widgets/partner-match/index.html" title="Partner" loading="lazy"></iframe>
+          <iframe data-src="widgets/partner-match/index.html" title="Partner"></iframe>
         </div>
         <div class="pw-quick-panel" data-quick-panel="timeline">
           <div class="pw-quick-title">Timeline</div>
-          <iframe src="widgets/timeline/index.html" title="Timeline" loading="lazy"></iframe>
+          <iframe data-src="widgets/timeline/index.html" title="Timeline"></iframe>
         </div>
       </div>
 
@@ -396,22 +398,22 @@
   </nav>
 
   <div class="pw-panel" data-panel="meter">
-    <iframe src="widgets/meter/index.html" title="Pluto Phases Meter" loading="lazy"></iframe>
+    <iframe data-src="widgets/meter/index.html" title="Pluto Phases Meter"></iframe>
   </div>
   <div class="pw-panel" data-panel="happening">
-    <iframe src="widgets/happening/index.html" title="What Was Happening" loading="lazy"></iframe>
+    <iframe data-src="widgets/happening/index.html" title="What Was Happening"></iframe>
   </div>
   <div class="pw-panel" data-panel="where-when">
-    <iframe src="widgets/where-when/index.html" title="Where and When" loading="lazy"></iframe>
+    <iframe data-src="widgets/where-when/index.html" title="Where and When"></iframe>
   </div>
   <div class="pw-panel" data-panel="location-checker">
-    <iframe src="widgets/location-checker/index.html" title="Location Checker" loading="lazy"></iframe>
+    <div id="pw-location-detail-slot"></div>
   </div>
   <div class="pw-panel" data-panel="partner-match">
-    <iframe src="widgets/partner-match/index.html" title="Partner Match" loading="lazy"></iframe>
+    <iframe data-src="widgets/partner-match/index.html" title="Partner Match"></iframe>
   </div>
   <div class="pw-panel" data-panel="timeline">
-    <iframe src="widgets/timeline/index.html" title="Pluto Phases Timeline" loading="lazy"></iframe>
+    <iframe data-src="widgets/timeline/index.html" title="Pluto Phases Timeline"></iframe>
   </div>
 
 </div>
@@ -431,7 +433,7 @@
   var DEFAULT_CURRENT_LOCATION = { place: "London, UK" };
   var METER_SIGN_NAMES = ["Global","Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
   var METER_SIGN_SYMBOLS = ["\uD83C\uDF10","\u2648","\u2649","\u264A","\u264B","\u264C","\u264D","\u264E","\u264F","\u2650","\u2651","\u2652","\u2653"];
-  var DEFAULT_METER = { sign:0, gender:"male", mode:"now", month:1, day:1, year:1990, hour:12, minute:0, ampm:"PM" };
+  var DEFAULT_METER = { sign:0, gender:"male", mode:"now", month:1, day:1, year:2024, hour:12, minute:0, ampm:"PM" };
   // Same 17 cities the Location Checker widget itself offers as chips.
   var QUICK_CITIES = [
     { name: "Bangkok" }, { name: "Hong Kong" }, { name: "London" }, { name: "Sydney" },
@@ -479,6 +481,23 @@
   var tabs = Array.prototype.slice.call(document.querySelectorAll(".pw-tab"));
   var panels = Array.prototype.slice.call(document.querySelectorAll(".pw-panel"));
 
+  // Iframes only start loading the moment their panel is actually opened,
+  // instead of all ten loading in the background on page load — one of
+  // them (Location Checker) ships a ~6MB local data file, so loading it
+  // twice (quick view + bottom tab) upfront was competing with every
+  // other widget for bandwidth on a person's very first visit.
+  function ensureIframeLoaded(panelEl){
+    var iframe = panelEl.querySelector("iframe");
+    if (iframe && !iframe.getAttribute("src") && iframe.dataset.src){
+      iframe.setAttribute("src", iframe.dataset.src);
+    }
+  }
+
+  // Location Checker is the one widget with an expensive (~6MB) local
+  // data file, so rather than two separate iframes for the quick view
+  // and the bottom tab (each loading that file on its own), there's a
+  // single shared iframe that physically moves between the two slots.
+  // Moving an already-loaded iframe via appendChild does not reload it.
   function activateTab(name){
     var alreadyActive = tabs.some(function(t){
       return t.getAttribute("data-target") === name && t.classList.contains("active");
@@ -489,7 +508,14 @@
       return;
     }
     tabs.forEach(function(t){ t.classList.toggle("active", t.getAttribute("data-target") === name); });
-    panels.forEach(function(p){ p.classList.toggle("active", p.getAttribute("data-panel") === name); });
+    panels.forEach(function(p){
+      var isMatch = p.getAttribute("data-panel") === name;
+      p.classList.toggle("active", isMatch);
+      if (isMatch){
+        if (name === "location-checker") showSharedLocationIframe("detail");
+        else ensureIframeLoaded(p);
+      }
+    });
   }
   tabs.forEach(function(t){
     t.addEventListener("click", function(){ activateTab(t.getAttribute("data-target")); });
@@ -504,12 +530,68 @@
 
   function activateQuick(name){
     quickTabs.forEach(function(t){ t.classList.toggle("active", t.getAttribute("data-quick") === name); });
-    quickPanels.forEach(function(p){ p.classList.toggle("active", p.getAttribute("data-quick-panel") === name); });
+    quickPanels.forEach(function(p){
+      var isMatch = p.getAttribute("data-quick-panel") === name;
+      p.classList.toggle("active", isMatch);
+      if (isMatch){
+        if (name === "location") showSharedLocationIframe("quick");
+        else ensureIframeLoaded(p);
+      }
+    });
   }
   quickTabs.forEach(function(t){
     t.addEventListener("click", function(){ activateQuick(t.getAttribute("data-quick")); });
   });
-  activateQuick("forecast"); // always one visible by default
+  activateQuick("forecast"); // always one visible by default — loads immediately
+
+  // =========================================================
+  // Shared Location Checker iframe — one instance, physically moved
+  // between the quick-view slot and the bottom-tab slot, instead of
+  // two separate iframes each loading its ~6MB data file.
+  // =========================================================
+  var sharedLocationIframe = document.getElementById("pw-shared-location-iframe");
+  var locationQuickSlot = document.getElementById("pw-location-quick-slot");
+  var locationDetailSlot = document.getElementById("pw-location-detail-slot");
+
+  function currentLocationMode(){
+    return sharedLocationIframe.parentElement === locationDetailSlot ? "detail" : "quick";
+  }
+
+  function refreshSharedLocation(mode){
+    var doc = getDoc(sharedLocationIframe);
+    if (!doc) return; // not loaded yet — its own 'load' listener will call this once ready
+    if (mode === "detail"){
+      applyProfileToIframe("location-checker", sharedLocationIframe);
+      makeIframeBackgroundTransparent(sharedLocationIframe);
+      sharedLocationIframe.classList.add("pw-ready");
+    } else {
+      injectCompactCss(doc, QUICK_HIDE["location"] || [], QUICK_EXTRA_CSS["location"] || "");
+      applyProfileToQuickIframe("location", sharedLocationIframe);
+      makeIframeBackgroundTransparent(sharedLocationIframe);
+      autoSizeIframe(sharedLocationIframe, doc);
+      sharedLocationIframe.classList.add("pw-ready");
+    }
+  }
+
+  function showSharedLocationIframe(mode){
+    var targetSlot = mode === "detail" ? locationDetailSlot : locationQuickSlot;
+    if (sharedLocationIframe.parentElement !== targetSlot) targetSlot.appendChild(sharedLocationIframe);
+    if (!sharedLocationIframe.getAttribute("src") && sharedLocationIframe.dataset.src){
+      sharedLocationIframe.setAttribute("src", sharedLocationIframe.dataset.src);
+    }
+    refreshSharedLocation(mode);
+  }
+
+  sharedLocationIframe.addEventListener("load", function(){
+    refreshSharedLocation(currentLocationMode());
+  });
+
+  // Live edits (birth details, current location) only refresh whichever
+  // mode the shared iframe is currently showing — switching tabs later
+  // re-syncs with the latest data anyway via showSharedLocationIframe().
+  function refreshSharedLocationIfCurrent(mode){
+    if (currentLocationMode() === mode) refreshSharedLocation(mode);
+  }
 
   // =========================================================
   // Populate the shared birth-profile selects
@@ -588,7 +670,10 @@
   for (var md = 1; md <= 31; md++){
     var mod_ = document.createElement("option"); mod_.value = md; mod_.textContent = md; mDaySel.appendChild(mod_);
   }
-  for (var my = curYear; my >= 1930; my--){
+  // The Meter's own compute is only valid between 2017 and 2032 —
+  // custom-moment years are limited to match, so nothing selectable
+  // here can produce its "date out of range" error.
+  for (var my = 2032; my >= 2017; my--){
     var moy = document.createElement("option"); moy.value = my; moy.textContent = my; mYearSel.appendChild(moy);
   }
   for (var mh = 1; mh <= 12; mh++){
@@ -897,10 +982,12 @@
   // use that data, so editing (say) the partner's details doesn't also
   // re-trigger Location Checker's geocode lookup.
   function pushToDetail(panelName){
+    if (panelName === "location-checker"){ refreshSharedLocationIfCurrent("detail"); return; }
     var el = document.querySelector('.pw-panel[data-panel="' + panelName + '"] iframe');
     if (el) applyProfileToIframe(panelName, el);
   }
   function pushToQuick(name){
+    if (name === "location"){ refreshSharedLocationIfCurrent("quick"); return; }
     var el = document.querySelector('.pw-quick-panel[data-quick-panel="' + name + '"] iframe');
     if (el) applyProfileToQuickIframe(name, el);
   }
@@ -1110,14 +1197,28 @@
     "timeline": ["#ptw-birth-fields"]
   };
 
-  function injectDetailCompact(doc, hideSelectors){
-    if (!doc || !doc.head || !hideSelectors || !hideSelectors.length) return;
+  // Both compact modes below write into this single overwritable style
+  // tag per iframe (rather than each appending a brand-new <style>), so
+  // an iframe that switches modes (currently only the shared Location
+  // Checker iframe) gets a clean ruleset each time instead of old and
+  // new hide-lists stacking on top of each other.
+  function setModeStyle(doc, cssText){
+    if (!doc || !doc.head) return;
     try {
-      var style = doc.createElement("style");
-      style.setAttribute("data-injected", "pw-detail-relocate");
-      style.textContent = hideSelectors.join(",") + "{ display:none !important; }";
-      doc.head.appendChild(style);
+      var style = doc.getElementById("pw-mode-style");
+      if (!style){
+        style = doc.createElement("style");
+        style.id = "pw-mode-style";
+        doc.head.appendChild(style);
+      }
+      style.textContent = cssText || "";
     } catch(e){}
+  }
+
+  function injectDetailCompact(doc, hideSelectors){
+    if (!doc) return;
+    if (!hideSelectors || !hideSelectors.length){ setModeStyle(doc, ""); return; }
+    setModeStyle(doc, hideSelectors.join(",") + "{ display:none !important; }");
   }
 
   function triggerWhereWhenLocate(doc){
@@ -1171,14 +1272,17 @@
   function applyProfileToAllIframes(){
     panels.forEach(function(panel){
       var name = panel.getAttribute("data-panel");
+      if (name === "location-checker") return; // handled below
       var iframe = panel.querySelector("iframe");
       if (iframe) applyProfileToIframe(name, iframe);
     });
     quickPanels.forEach(function(panel){
       var name = panel.getAttribute("data-quick-panel");
+      if (name === "location") return; // handled below
       var iframe = panel.querySelector("iframe");
       if (iframe) applyProfileToQuickIframe(name, iframe);
     });
+    refreshSharedLocation(currentLocationMode());
   }
 
   panels.forEach(function(panel){
@@ -1213,17 +1317,13 @@
   };
 
   function injectCompactCss(doc, hideSelectors, extraCss){
-    if (!doc || !doc.head) return;
-    try {
-      var style = doc.createElement("style");
-      style.setAttribute("data-injected", "pw-compact");
-      style.textContent =
-        hideSelectors.join(",") + "{ display:none !important; }" +
-        ".app{ padding:12px !important; max-width:100% !important; width:100% !important; }" +
-        ".meter-card{ margin-bottom:0 !important; }" +
-        (extraCss || "");
-      doc.head.appendChild(style);
-    } catch(e){}
+    if (!doc) return;
+    var css =
+      hideSelectors.join(",") + "{ display:none !important; }" +
+      ".app{ padding:12px !important; max-width:100% !important; width:100% !important; }" +
+      ".meter-card{ margin-bottom:0 !important; }" +
+      (extraCss || "");
+    setModeStyle(doc, css);
   }
 
   function autoSizeIframe(iframeEl, doc){
@@ -1330,6 +1430,7 @@
 
   quickPanels.forEach(function(panel){
     var name = panel.getAttribute("data-quick-panel");
+    if (name === "location") return; // shared iframe has its own dedicated 'load' handler
     var iframe = panel.querySelector("iframe");
     if (!iframe) return;
     iframe.addEventListener("load", function(){
