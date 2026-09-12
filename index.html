@@ -16,10 +16,6 @@
     background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius,14px);
     padding:16px; margin-bottom:20px;
   }
-  #pw-compact-title{
-    text-align:center; font-family:var(--font-display); font-size:1.6rem; font-weight:700;
-    color:var(--text-hi); margin:0 0 14px;
-  }
 
   /* ---- quick-glance section (panel first, buttons below it) ---- */
   #pw-quick{ margin-bottom:18px; }
@@ -31,8 +27,8 @@
   }
   .pw-quick-panel iframe.pw-ready{ visibility:visible; }
   .pw-quick-title{
-    text-align:center; font-family:var(--font-display); font-size:.78rem; letter-spacing:.25em;
-    text-transform:uppercase; color:var(--accent); margin:0 0 8px; font-weight:600;
+    text-align:center; font-family:var(--font-display); font-size:1.3rem; font-weight:700;
+    color:var(--text-hi); margin:0 0 8px;
   }
   #pw-quick-tabs{
     display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px;
@@ -57,6 +53,8 @@
     color:var(--accent); margin:0 0 10px; font-weight:600;
   }
   #pw-profile h2.pw-sub-h2{ margin-top:18px; padding-top:14px; border-top:1px solid var(--card-border); }
+  #pw-profile h2.pw-first-h2{ margin-top:0; padding-top:0; border-top:0; }
+  .pw-hint-text{ font-size:12px; color:var(--text-lo); margin-top:6px; }
   .pw-row{ display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
   .pw-row > div{ flex:1 1 70px; min-width:70px; }
   .pw-row label{ display:block; font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:1px; margin-bottom:3px; }
@@ -124,7 +122,6 @@
 <div id="pw-shell">
 
   <div id="pw-compact">
-    <div id="pw-compact-title">Pluto Widgets</div>
 
     <div id="pw-quick">
       <div class="pw-quick-panel" data-quick-panel="forecast">
@@ -174,9 +171,65 @@
     </div>
 
     <div id="pw-profile">
-      <h2>Your Birth Details</h2>
-
       <div id="pw-profile-form">
+        <h2 class="pw-sub-h2 pw-first-h2">Forecast Meter</h2>
+        <div class="pw-row">
+          <div style="flex:1 1 100%;">
+            <label>Gender</label>
+            <div class="pw-chip-row" id="pwm-gender-row">
+              <button type="button" class="pw-chip active" data-gender="male">Male</button>
+              <button type="button" class="pw-chip" data-gender="female">Female</button>
+            </div>
+            <div id="pwm-gender-hint" class="pw-hint-text">Use your Sun sign</div>
+          </div>
+        </div>
+        <div class="pw-row">
+          <div style="flex:1 1 100%;">
+            <label>Sign</label>
+            <div class="pw-chip-row" id="pwm-sign-row"></div>
+          </div>
+        </div>
+        <div class="pw-row">
+          <div style="flex:1 1 100%;">
+            <label>Reading for</label>
+            <div class="pw-chip-row" id="pwm-mode-row">
+              <button type="button" class="pw-chip active" data-mode="now">Now (live)</button>
+              <button type="button" class="pw-chip" data-mode="custom">Custom moment</button>
+            </div>
+          </div>
+        </div>
+        <div id="pwm-custom-fields" style="display:none;">
+          <div class="pw-row">
+            <div>
+              <label for="pwm-month">Month</label>
+              <select id="pwm-month"></select>
+            </div>
+            <div>
+              <label for="pwm-day">Day</label>
+              <select id="pwm-day"></select>
+            </div>
+            <div>
+              <label for="pwm-year">Year</label>
+              <select id="pwm-year"></select>
+            </div>
+          </div>
+          <div class="pw-row">
+            <div>
+              <label for="pwm-hour">Hour</label>
+              <select id="pwm-hour"></select>
+            </div>
+            <div>
+              <label for="pwm-minute">Minute</label>
+              <select id="pwm-minute"></select>
+            </div>
+            <div>
+              <label for="pwm-ampm">AM/PM</label>
+              <select id="pwm-ampm"></select>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="pw-sub-h2">Your Birth Details</h2>
         <div class="pw-row">
           <div>
             <label for="pw-month">Month</label>
@@ -214,7 +267,13 @@
             <label for="pw-place">Birth Location</label>
             <div class="pw-place-row">
               <input type="text" id="pw-place" placeholder="e.g. Kolkata, India" autocomplete="off">
+              <button type="button" id="pw-place-locate" class="pw-chip">Locate</button>
             </div>
+          </div>
+        </div>
+        <div class="pw-row">
+          <div style="flex:1 1 100%;">
+            <div class="pw-chip-row" id="pw-place-city-chips"></div>
           </div>
         </div>
 
@@ -261,62 +320,6 @@
           <div>
             <label for="pwp-ampm">AM/PM</label>
             <select id="pwp-ampm"></select>
-          </div>
-        </div>
-
-        <h2 class="pw-sub-h2">Meter Settings</h2>
-        <div class="pw-row">
-          <div style="flex:1 1 100%;">
-            <label>Sign</label>
-            <div class="pw-chip-row" id="pwm-sign-row"></div>
-          </div>
-        </div>
-        <div class="pw-row">
-          <div style="flex:1 1 100%;">
-            <label>Gender</label>
-            <div class="pw-chip-row" id="pwm-gender-row">
-              <button type="button" class="pw-chip active" data-gender="male">Male</button>
-              <button type="button" class="pw-chip" data-gender="female">Female</button>
-            </div>
-          </div>
-        </div>
-        <div class="pw-row">
-          <div style="flex:1 1 100%;">
-            <label>Reading for</label>
-            <div class="pw-chip-row" id="pwm-mode-row">
-              <button type="button" class="pw-chip active" data-mode="now">Now (live)</button>
-              <button type="button" class="pw-chip" data-mode="custom">Custom moment</button>
-            </div>
-          </div>
-        </div>
-        <div id="pwm-custom-fields" style="display:none;">
-          <div class="pw-row">
-            <div>
-              <label for="pwm-month">Month</label>
-              <select id="pwm-month"></select>
-            </div>
-            <div>
-              <label for="pwm-day">Day</label>
-              <select id="pwm-day"></select>
-            </div>
-            <div>
-              <label for="pwm-year">Year</label>
-              <select id="pwm-year"></select>
-            </div>
-          </div>
-          <div class="pw-row">
-            <div>
-              <label for="pwm-hour">Hour</label>
-              <select id="pwm-hour"></select>
-            </div>
-            <div>
-              <label for="pwm-minute">Minute</label>
-              <select id="pwm-minute"></select>
-            </div>
-            <div>
-              <label for="pwm-ampm">AM/PM</label>
-              <select id="pwm-ampm"></select>
-            </div>
           </div>
         </div>
 
@@ -542,32 +545,40 @@
     var mop = document.createElement("option"); mop.value = p; mop.textContent = p; mAmpmSel.appendChild(mop);
   });
 
-  // Meter sign chips (Global + 12 signs)
+  // Meter gender chips (built first, since gender comes before sign in the layout)
+  var genderRow = document.getElementById("pwm-gender-row");
+  var genderHintEl = document.getElementById("pwm-gender-hint");
+  var meterGenderValue = "male";
+  function updateGenderHint(){
+    genderHintEl.textContent = "Use your " + (meterGenderValue === "male" ? "Sun" : "Moon") + " sign";
+  }
+  Array.prototype.slice.call(genderRow.children).forEach(function(btn){
+    btn.addEventListener("click", function(){
+      meterGenderValue = this.getAttribute("data-gender");
+      Array.prototype.slice.call(genderRow.children).forEach(function(b){ b.classList.remove("active"); });
+      this.classList.add("active");
+      updateGenderHint();
+    });
+  });
+  updateGenderHint();
+
+  // Meter sign chips — rendered 1..12 then Global last, matching the
+  // widget's own layout. data-sign carries the real index (0 = Global).
   var signRow = document.getElementById("pwm-sign-row");
   var meterSignValue = 0;
-  METER_SIGN_NAMES.forEach(function(name, idx){
+  var SIGN_RENDER_ORDER = [1,2,3,4,5,6,7,8,9,10,11,12,0];
+  SIGN_RENDER_ORDER.forEach(function(idx){
     var btn = document.createElement("button");
     btn.type = "button";
     btn.className = "pw-chip" + (idx === 0 ? " active" : "");
     btn.setAttribute("data-sign", idx);
-    btn.textContent = METER_SIGN_SYMBOLS[idx] + " " + name;
+    btn.textContent = METER_SIGN_SYMBOLS[idx] + " " + METER_SIGN_NAMES[idx];
     btn.addEventListener("click", function(){
       meterSignValue = parseInt(this.getAttribute("data-sign"), 10);
       Array.prototype.slice.call(signRow.children).forEach(function(b){ b.classList.remove("active"); });
       this.classList.add("active");
     });
     signRow.appendChild(btn);
-  });
-
-  // Meter gender chips
-  var genderRow = document.getElementById("pwm-gender-row");
-  var meterGenderValue = "male";
-  Array.prototype.slice.call(genderRow.children).forEach(function(btn){
-    btn.addEventListener("click", function(){
-      meterGenderValue = this.getAttribute("data-gender");
-      Array.prototype.slice.call(genderRow.children).forEach(function(b){ b.classList.remove("active"); });
-      this.classList.add("active");
-    });
   });
 
   // Meter now/custom mode chips
@@ -583,41 +594,42 @@
     });
   });
 
-  // Current-location field + city chips
-  var currentPlaceInput = document.getElementById("pw-current-place");
-  var currentChipsWrap = document.getElementById("pw-current-city-chips");
-  QUICK_CITIES.forEach(function(c){
-    var btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "pw-chip";
-    btn.textContent = c.name;
-    btn.addEventListener("click", function(){
-      currentPlaceInput.value = c.name;
+  // Location fields: a plain text-address "Locate" (geocodes the typed
+  // text via the same lookup the widgets themselves use — no browser
+  // GPS), plus quick-pick city chips. Same behavior for both Birth
+  // Location and Current Location.
+  function wireLocationField(inputId, buttonId, chipsId){
+    var input = document.getElementById(inputId);
+    var btn = document.getElementById(buttonId);
+    var chipsWrap = document.getElementById(chipsId);
+    QUICK_CITIES.forEach(function(c){
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "pw-chip";
+      chip.textContent = c.name;
+      chip.addEventListener("click", function(){ input.value = c.name; });
+      chipsWrap.appendChild(chip);
     });
-    currentChipsWrap.appendChild(btn);
-  });
-  document.getElementById("pw-current-locate").addEventListener("click", function(){
-    var btn = this;
-    if (!navigator.geolocation){ alert("Geolocation isn't available in this browser."); return; }
-    btn.disabled = true; btn.textContent = "Locating…";
-    navigator.geolocation.getCurrentPosition(function(pos){
-      var lat = pos.coords.latitude, lon = pos.coords.longitude;
-      fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lon)
+    btn.addEventListener("click", function(){
+      var place = input.value.trim();
+      if (!place) return;
+      var original = btn.textContent;
+      btn.disabled = true; btn.textContent = "Searching…";
+      var url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(place);
+      fetch(url, { headers: { "Accept": "application/json" } })
         .then(function(r){ return r.json(); })
         .then(function(res){
-          var addr = res && res.address;
-          var name = addr ? (addr.city || addr.town || addr.village || (res.display_name || "").split(",")[0]) : null;
-          currentPlaceInput.value = name || (lat.toFixed(3) + ", " + lon.toFixed(3));
+          if (res && res.length){
+            input.value = res[0].display_name.split(",")[0];
+          }
         })
-        .catch(function(){
-          currentPlaceInput.value = lat.toFixed(3) + ", " + lon.toFixed(3);
-        })
-        .then(function(){ btn.disabled = false; btn.textContent = "Locate"; });
-    }, function(err){
-      alert("Could not get your location: " + err.message);
-      btn.disabled = false; btn.textContent = "Locate";
+        .catch(function(){ /* leave the typed text as-is */ })
+        .then(function(){ btn.disabled = false; btn.textContent = original; });
     });
-  });
+  }
+  var currentPlaceInput = document.getElementById("pw-current-place");
+  wireLocationField("pw-place", "pw-place-locate", "pw-place-city-chips");
+  wireLocationField("pw-current-place", "pw-current-locate", "pw-current-city-chips");
 
   // =========================================================
   // Load / save shared birth profile
@@ -678,6 +690,7 @@
     Array.prototype.slice.call(genderRow.children).forEach(function(b){
       b.classList.toggle("active", b.getAttribute("data-gender") === meterGenderValue);
     });
+    updateGenderHint();
     meterModeValue = p.mode || "now";
     Array.prototype.slice.call(modeRow.children).forEach(function(b){
       b.classList.toggle("active", b.getAttribute("data-mode") === meterModeValue);
