@@ -1196,6 +1196,12 @@
     "partner-match": [".pm-two-col"],
     "timeline": ["#ptw-birth-fields"]
   };
+  // Timeline's own CSS caps .app at a fixed 800px regardless of how much
+  // space is actually available in the panel — force it fluid here too,
+  // same as the quick-view treatment already does.
+  var DETAIL_EXTRA_CSS = {
+    "timeline": "body{width:100% !important;} .app{max-width:100% !important; width:100% !important;} #ptw-timeline,.ppt-root,.ppt-track{width:100% !important; max-width:100% !important;}"
+  };
 
   // Both compact modes below write into this single overwritable style
   // tag per iframe (rather than each appending a brand-new <style>), so
@@ -1215,10 +1221,10 @@
     } catch(e){}
   }
 
-  function injectDetailCompact(doc, hideSelectors){
+  function injectDetailCompact(doc, hideSelectors, extraCss){
     if (!doc) return;
-    if (!hideSelectors || !hideSelectors.length){ setModeStyle(doc, ""); return; }
-    setModeStyle(doc, hideSelectors.join(",") + "{ display:none !important; }");
+    var css = (hideSelectors && hideSelectors.length) ? hideSelectors.join(",") + "{ display:none !important; }" : "";
+    setModeStyle(doc, css + (extraCss || ""));
   }
 
   function triggerWhereWhenLocate(doc){
@@ -1254,7 +1260,7 @@
     var doc = getDoc(iframeEl);
     applyFieldMap(doc, p, WIDGET_MAP[panelName]);
     if (panelName === "partner-match") applyFieldMap(doc, readPartnerProfile() || DEFAULT_PARTNER, PARTNER2_MAP);
-    injectDetailCompact(doc, DETAIL_HIDE[panelName]);
+    injectDetailCompact(doc, DETAIL_HIDE[panelName], DETAIL_EXTRA_CSS[panelName]);
     autoTriggerDetail(panelName, doc);
   }
 
