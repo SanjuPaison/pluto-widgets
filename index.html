@@ -591,6 +591,7 @@
       applyProfileToQuickIframe("location", sharedLocationIframe);
       makeIframeBackgroundTransparent(sharedLocationIframe);
       autoSizeIframe(sharedLocationIframe, doc);
+      wireQuickClickToOpenDetail(sharedLocationIframe, "location");
       sharedLocationIframe.classList.add("pw-ready");
     }
   }
@@ -1297,6 +1298,36 @@
     } catch(e){}
   }
 
+  // Clicking anywhere inside a quick-view result opens the matching
+  // bottom-tab widget (its fuller, uncompacted view) instead of just
+  // sitting there as a static preview.
+  var QUICK_TO_DETAIL_TAB = {
+    "forecast": "meter",
+    "location": "location-checker",
+    "partner": "partner-match",
+    "timeline": "timeline"
+  };
+  function ensureTabOpen(name){
+    var isActive = tabs.some(function(t){
+      return t.getAttribute("data-target") === name && t.classList.contains("active");
+    });
+    if (!isActive) activateTab(name); // activateTab() also toggles an already-open tab closed, so only call it when it isn't already open
+    var panelEl = document.querySelector('.pw-panel[data-panel="' + name + '"]');
+    if (panelEl && panelEl.scrollIntoView) panelEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  function wireQuickClickToOpenDetail(iframeEl, quickName){
+    var doc = getDoc(iframeEl);
+    var detailName = QUICK_TO_DETAIL_TAB[quickName];
+    if (!doc || !doc.body || !detailName) return;
+    if (doc.body.getAttribute("data-pw-click-wired")) return; // avoid attaching more than once
+    doc.body.setAttribute("data-pw-click-wired", "1");
+    doc.body.addEventListener("click", function(e){
+      // let the Forecast widget's own refresh button do its own job in place
+      if (e.target.closest && e.target.closest("#headerRefreshBtn")) return;
+      ensureTabOpen(detailName);
+    });
+  }
+
   function applyProfileToAllIframes(){
     panels.forEach(function(panel){
       var name = panel.getAttribute("data-panel");
@@ -1467,6 +1498,7 @@
       injectCompactCss(doc, QUICK_HIDE[name] || [], QUICK_EXTRA_CSS[name] || "");
       applyProfileToQuickIframe(name, iframe);
       autoSizeIframe(iframe, doc);
+      wireQuickClickToOpenDetail(iframe, name);
       // reveal only once compacted + filled, to avoid a flash of the
       // full (uncompacted) widget before our overrides apply
       setTimeout(function(){ iframe.classList.add("pw-ready"); }, name === "timeline" ? 250 : 60);
