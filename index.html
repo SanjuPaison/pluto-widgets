@@ -19,6 +19,10 @@
 
   /* ---- quick-glance section (panel first, buttons below it) ---- */
   #pw-quick{ margin-bottom:18px; }
+  #pw-quick-results{
+    height:360px; overflow-y:auto; overflow-x:hidden; margin-bottom:10px;
+    border-radius:var(--radius-sm,8px);
+  }
   .pw-quick-panel{ display:none; }
   .pw-quick-panel.active{ display:block; }
   .pw-quick-panel iframe{
@@ -127,27 +131,30 @@
   <div id="pw-compact">
 
     <div id="pw-quick">
-      <div class="pw-quick-panel" data-quick-panel="forecast">
-        <div class="pw-quick-title">Forecast</div>
-        <iframe src="widgets/meter/index.html" title="Forecast" loading="lazy"></iframe>
-      </div>
-      <div class="pw-quick-panel" data-quick-panel="location">
-        <div class="pw-quick-title">Location</div>
-        <iframe src="widgets/location-checker/index.html" title="Location" loading="lazy"></iframe>
-      </div>
-      <div class="pw-quick-panel" data-quick-panel="partner">
-        <div class="pw-quick-title">Partner</div>
-        <iframe src="widgets/partner-match/index.html" title="Partner" loading="lazy"></iframe>
-      </div>
-      <div class="pw-quick-panel" data-quick-panel="timeline">
-        <div class="pw-quick-title">Timeline</div>
-        <iframe src="widgets/timeline/index.html" title="Timeline" loading="lazy"></iframe>
+      <div id="pw-quick-results">
+        <div class="pw-quick-panel" data-quick-panel="forecast">
+          <div class="pw-quick-title">Forecast</div>
+          <iframe src="widgets/meter/index.html" title="Forecast" loading="lazy"></iframe>
+        </div>
+        <div class="pw-quick-panel" data-quick-panel="location">
+          <div class="pw-quick-title">Location</div>
+          <iframe src="widgets/location-checker/index.html" title="Location" loading="lazy"></iframe>
+        </div>
+        <div class="pw-quick-panel" data-quick-panel="partner">
+          <div class="pw-quick-title">Partner</div>
+          <iframe src="widgets/partner-match/index.html" title="Partner" loading="lazy"></iframe>
+        </div>
+        <div class="pw-quick-panel" data-quick-panel="timeline">
+          <div class="pw-quick-title">Timeline</div>
+          <iframe src="widgets/timeline/index.html" title="Timeline" loading="lazy"></iframe>
+        </div>
       </div>
 
       <nav id="pw-quick-tabs" role="tablist" aria-label="Quick glance">
         <button class="pw-quick-tab" data-quick="forecast" title="Forecast — live reading" aria-label="Forecast">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17.5 19H9a5 5 0 1 1 1.9-9.63A4.5 4.5 0 1 1 17.5 19z"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.5 9.5H5.2a2.8 2.8 0 1 1 1.05-5.4A2.6 2.6 0 0 1 10.5 9.5z"/>
+            <path d="M19.5 19H9.8a4.3 4.3 0 1 1 1.65-8.3A3.8 3.8 0 0 1 19.5 19z"/>
           </svg>
         </button>
         <button class="pw-quick-tab" data-quick="location" title="Location" aria-label="Location">
@@ -351,8 +358,9 @@
 
   <nav id="pw-tabs" role="tablist" aria-label="Choose a tool">
     <button class="pw-tab" data-target="meter" title="Pluto Phases Meter (live reading)" aria-label="Pluto Phases Meter">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17.5 19H9a5 5 0 1 1 1.9-9.63A4.5 4.5 0 1 1 17.5 19z"/>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.5 9.5H5.2a2.8 2.8 0 1 1 1.05-5.4A2.6 2.6 0 0 1 10.5 9.5z"/>
+        <path d="M19.5 19H9.8a4.3 4.3 0 1 1 1.65-8.3A3.8 3.8 0 0 1 19.5 19z"/>
       </svg>
     </button>
     <button class="pw-tab" data-target="location-checker" title="Location Checker" aria-label="Location Checker">
@@ -1145,6 +1153,7 @@
   };
 
   var QUICK_EXTRA_CSS = {
+    "forecast": "header{justify-content:flex-end !important;}",
     "timeline": "body{width:100% !important;} #ptw-timeline,.ppt-root,.ppt-track{width:100% !important; max-width:100% !important;}"
   };
 
