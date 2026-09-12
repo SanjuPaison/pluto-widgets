@@ -1445,6 +1445,52 @@
     });
   });
 
+  // =========================================================
+  // Background preloading — once Forecast (the default view) is
+  // settled, quietly load every other tool one at a time while its
+  // panel is still hidden (display:none doesn't stop an iframe's own
+  // scripts from running, just from being painted). By the time
+  // someone actually opens a tab, it's usually already loaded, filled
+  // and computed instead of starting from scratch on that click.
+  // Loading them one at a time (not all at once) avoids the original
+  // problem of everything competing for bandwidth on first visit.
+  // =========================================================
+  var PRELOAD_QUEUE = [
+    { kind: "quick", name: "location" },
+    { kind: "quick", name: "partner" },
+    { kind: "quick", name: "timeline" },
+    { kind: "detail", name: "meter" },
+    { kind: "detail", name: "happening" },
+    { kind: "detail", name: "where-when" },
+    { kind: "detail", name: "partner-match" },
+    { kind: "detail", name: "timeline" },
+    { kind: "detail", name: "location-checker" }
+  ];
+
+  function findQueuedIframe(item){
+    if (item.name === "location") return sharedLocationIframe;
+    if (item.name === "location-checker") return null; // same iframe as "location" above — already covered
+    var selector = item.kind === "quick"
+      ? '.pw-quick-panel[data-quick-panel="' + item.name + '"] iframe'
+      : '.pw-panel[data-panel="' + item.name + '"] iframe';
+    return document.querySelector(selector);
+  }
+
+  function preloadNext(i){
+    if (i >= PRELOAD_QUEUE.length) return;
+    var iframe = findQueuedIframe(PRELOAD_QUEUE[i]);
+    if (!iframe || iframe.getAttribute("src") || !iframe.dataset.src){
+      preloadNext(i + 1);
+      return;
+    }
+    iframe.addEventListener("load", function onLoad(){
+      iframe.removeEventListener("load", onLoad);
+      setTimeout(function(){ preloadNext(i + 1); }, 200);
+    });
+    iframe.setAttribute("src", iframe.dataset.src);
+  }
+  setTimeout(function(){ preloadNext(0); }, 1200);
+
 })();
 </script>
 
