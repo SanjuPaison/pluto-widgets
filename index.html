@@ -670,7 +670,7 @@
   // text via the same lookup the widgets themselves use — no browser
   // GPS), plus quick-pick city chips. Same behavior for both Birth
   // Location and Current Location.
-  function wireLocationField(inputId, buttonId, chipsId, statusId){
+  function wireLocationField(inputId, buttonId, chipsId, statusId, onApply){
     var input = document.getElementById(inputId);
     var btn = document.getElementById(buttonId);
     var chipsWrap = chipsId ? document.getElementById(chipsId) : null;
@@ -684,7 +684,7 @@
         chip.addEventListener("click", function(){
           input.value = c.name;
           if (statusEl){ statusEl.textContent = ""; statusEl.className = "pw-geo-status"; }
-          liveApplyAndSave();
+          onApply();
         });
         chipsWrap.appendChild(chip);
       });
@@ -713,7 +713,7 @@
               statusEl.textContent = "Found: " + res[0].display_name;
               statusEl.className = "pw-geo-status pw-geo-ok";
             }
-            liveApplyAndSave();
+            onApply();
           } else if (statusEl){
             statusEl.textContent = "Could not find that place.";
             statusEl.className = "pw-geo-status pw-geo-err";
@@ -729,8 +729,8 @@
     });
   }
   var currentPlaceInput = document.getElementById("pw-current-place");
-  wireLocationField("pw-place", "pw-place-locate", null, "pw-place-status");
-  wireLocationField("pw-current-place", "pw-current-locate", "pw-current-city-chips", "pw-current-status");
+  wireLocationField("pw-place", "pw-place-locate", null, "pw-place-status", function(){ liveApplyBirthDetails(); });
+  wireLocationField("pw-current-place", "pw-current-locate", "pw-current-city-chips", "pw-current-status", function(){ liveApplyCurrentLocation(); });
 
   // =========================================================
   // Load / save shared birth profile
@@ -893,29 +893,50 @@
   profileCard.classList.add("saved");
 
   // Every field applies live — no Save step needed. Each change writes
-  // straight to storage and immediately pushes into every iframe.
-  function liveApplyAndSave(){
+  // straight to storage and pushes only into the iframes that actually
+  // use that data, so editing (say) the partner's details doesn't also
+  // re-trigger Location Checker's geocode lookup.
+  function pushToDetail(panelName){
+    var el = document.querySelector('.pw-panel[data-panel="' + panelName + '"] iframe');
+    if (el) applyProfileToIframe(panelName, el);
+  }
+  function pushToQuick(name){
+    var el = document.querySelector('.pw-quick-panel[data-quick-panel="' + name + '"] iframe');
+    if (el) applyProfileToQuickIframe(name, el);
+  }
+  function liveApplyBirthDetails(){
     var p = currentProfile();
-    var partner = currentPartnerProfile();
-    var currentLoc = currentCurrentLocation();
     writeProfile(p);
+    summaryText.innerHTML = formatSummary(p, currentPartnerProfile());
+    ["happening","where-when","location-checker","timeline","partner-match"].forEach(pushToDetail);
+    ["location","timeline","partner"].forEach(pushToQuick);
+  }
+  function liveApplyCurrentLocation(){
+    writeCurrentLocation(currentCurrentLocation());
+    pushToDetail("location-checker");
+    pushToQuick("location");
+  }
+  function liveApplyPartner(){
+    var partner = currentPartnerProfile();
     writePartnerProfile(partner);
-    writeCurrentLocation(currentLoc);
-    summaryText.innerHTML = formatSummary(p, partner);
-    applyProfileToAllIframes();
+    summaryText.innerHTML = formatSummary(currentProfile(), partner);
+    pushToDetail("partner-match");
+    pushToQuick("partner");
   }
   [monthSel, daySel, yearSel, hourSel, minuteSel, ampmSel, timezoneSel].forEach(function(sel){
-    sel.addEventListener("change", liveApplyAndSave);
+    sel.addEventListener("change", liveApplyBirthDetails);
   });
-  unknownBox.addEventListener("change", liveApplyAndSave);
-  placeInput.addEventListener("change", liveApplyAndSave);
+  unknownBox.addEventListener("change", liveApplyBirthDetails);
+  placeInput.addEventListener("change", liveApplyBirthDetails);
   [pMonthSel, pDaySel, pYearSel, pHourSel, pMinuteSel, pAmpmSel, pTimezoneSel].forEach(function(sel){
-    sel.addEventListener("change", liveApplyAndSave);
+    sel.addEventListener("change", liveApplyPartner);
   });
-  currentPlaceInput.addEventListener("change", liveApplyAndSave);
+  currentPlaceInput.addEventListener("change", liveApplyCurrentLocation);
 
   document.getElementById("pw-profile-done").addEventListener("click", function(){
-    liveApplyAndSave();
+    liveApplyBirthDetails();
+    liveApplyPartner();
+    liveApplyCurrentLocation();
     profileCard.classList.add("saved");
   });
   document.getElementById("pw-profile-edit").addEventListener("click", function(){
@@ -1047,6 +1068,32 @@
         fireEvents(el);
       });
     }
+
+    updateMeterSelectionLabel(doc, m);
+  }
+
+  // Since the sign/gender picker is hidden (relocated to Forecast Meter
+  // above), show a small heading above the percentage — same idea as
+  // Location Checker's own place-name heading above its percentage.
+  function updateMeterSelectionLabel(doc, m){
+    if (!doc) return;
+    var card = doc.querySelector(".meter-card");
+    if (!card) return;
+    if (!doc.getElementById("pw-meter-label-style")){
+      var style = doc.createElement("style");
+      style.id = "pw-meter-label-style";
+      style.textContent = ".pw-meter-label{font-size:17px;font-weight:600;color:var(--text-hi);margin:0 0 8px;text-align:center;}";
+      doc.head.appendChild(style);
+    }
+    var label = doc.getElementById("pw-meter-label");
+    if (!label){
+      label = doc.createElement("p");
+      label.id = "pw-meter-label";
+      label.className = "pw-meter-label";
+      card.insertBefore(label, card.firstChild);
+    }
+    var signName = METER_SIGN_NAMES[m.sign] || "Global";
+    label.textContent = signName;
   }
 
   // Birth-related input fields/buttons in every bottom (detailed) tool
