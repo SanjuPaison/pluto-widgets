@@ -491,6 +491,22 @@
     if (iframe && !iframe.getAttribute("src") && iframe.dataset.src){
       iframe.setAttribute("src", iframe.dataset.src);
     }
+    return iframe;
+  }
+
+  // Timeline lays out its bars using the container's width at the moment
+  // it renders. If that happened while the panel was still hidden (e.g.
+  // background-preloaded before it was ever opened), the widget falls
+  // back to a fixed narrow width and never re-measures on its own — so
+  // force a fresh render now that the panel is genuinely visible.
+  function refreshTimelineOnShow(iframe){
+    if (!iframe) return;
+    var doc = getDoc(iframe);
+    if (!doc) return; // not loaded yet — its own load handler renders once ready
+    setTimeout(function(){
+      try { doc.defaultView.dispatchEvent(new Event("resize")); } catch(e){}
+      triggerTimeline(doc);
+    }, 50);
   }
 
   // Location Checker is the one widget with an expensive (~6MB) local
@@ -513,7 +529,10 @@
       p.classList.toggle("active", isMatch);
       if (isMatch){
         if (name === "location-checker") showSharedLocationIframe("detail");
-        else ensureIframeLoaded(p);
+        else {
+          var iframe = ensureIframeLoaded(p);
+          if (name === "timeline") refreshTimelineOnShow(iframe);
+        }
       }
     });
   }
@@ -535,7 +554,10 @@
       p.classList.toggle("active", isMatch);
       if (isMatch){
         if (name === "location") showSharedLocationIframe("quick");
-        else ensureIframeLoaded(p);
+        else {
+          var iframe = ensureIframeLoaded(p);
+          if (name === "timeline") refreshTimelineOnShow(iframe);
+        }
       }
     });
   }
