@@ -27,8 +27,8 @@
   }
   .pw-quick-panel iframe.pw-ready{ visibility:visible; }
   .pw-quick-title{
-    text-align:center; font-family:var(--font-display); font-size:1.3rem; font-weight:700;
-    color:var(--text-hi); margin:0 0 8px;
+    text-align:center; font-family:var(--font-display); font-size:1.1rem; letter-spacing:.25em;
+    text-transform:uppercase; color:var(--accent); margin:0 0 8px; font-weight:600;
   }
   #pw-quick-tabs{
     display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px;
@@ -55,6 +55,9 @@
   #pw-profile h2.pw-sub-h2{ margin-top:18px; padding-top:14px; border-top:1px solid var(--card-border); }
   #pw-profile h2.pw-first-h2{ margin-top:0; padding-top:0; border-top:0; }
   .pw-hint-text{ font-size:12px; color:var(--text-lo); margin-top:6px; }
+  .pw-geo-status{ font-size:11.5px; color:var(--text-lo); margin-top:5px; min-height:14px; }
+  .pw-geo-status.pw-geo-ok{ color:#86efac; }
+  .pw-geo-status.pw-geo-err{ color:#fca5a5; }
   .pw-row{ display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
   .pw-row > div{ flex:1 1 70px; min-width:70px; }
   .pw-row label{ display:block; font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:1px; margin-bottom:3px; }
@@ -269,11 +272,7 @@
               <input type="text" id="pw-place" placeholder="e.g. Kolkata, India" autocomplete="off">
               <button type="button" id="pw-place-locate" class="pw-chip">Locate</button>
             </div>
-          </div>
-        </div>
-        <div class="pw-row">
-          <div style="flex:1 1 100%;">
-            <div class="pw-chip-row" id="pw-place-city-chips"></div>
+            <div class="pw-geo-status" id="pw-place-status"></div>
           </div>
         </div>
 
@@ -285,6 +284,7 @@
               <input type="text" id="pw-current-place" placeholder="e.g. New York, USA" autocomplete="off">
               <button type="button" id="pw-current-locate" class="pw-chip">Locate</button>
             </div>
+            <div class="pw-geo-status" id="pw-current-status"></div>
           </div>
         </div>
         <div class="pw-row">
@@ -416,9 +416,13 @@
   var METER_SIGN_NAMES = ["Global","Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
   var METER_SIGN_SYMBOLS = ["\uD83C\uDF10","\u2648","\u2649","\u264A","\u264B","\u264C","\u264D","\u264E","\u264F","\u2650","\u2651","\u2652","\u2653"];
   var DEFAULT_METER = { sign:0, gender:"male", mode:"now", month:1, day:1, year:1990, hour:12, minute:0, ampm:"PM" };
+  // Same 17 cities the Location Checker widget itself offers as chips.
   var QUICK_CITIES = [
-    { name: "London" }, { name: "New York" }, { name: "Tokyo" },
-    { name: "Dubai" }, { name: "Delhi" }, { name: "Sydney" }
+    { name: "Bangkok" }, { name: "Hong Kong" }, { name: "London" }, { name: "Sydney" },
+    { name: "Shanghai" }, { name: "Tokyo" }, { name: "Istanbul" }, { name: "Dubai" },
+    { name: "Delhi" }, { name: "New York" }, { name: "Paris" }, { name: "Los Angeles" },
+    { name: "Cairo" }, { name: "Hanoi" }, { name: "Vancouver" }, { name: "S\u00e3o Paulo" },
+    { name: "Rome" }
   ];
 
   // =========================================================
@@ -544,6 +548,9 @@
   ["AM","PM"].forEach(function(p){
     var mop = document.createElement("option"); mop.value = p; mop.textContent = p; mAmpmSel.appendChild(mop);
   });
+  [mMonthSel, mDaySel, mYearSel, mHourSel, mMinuteSel, mAmpmSel].forEach(function(sel){
+    sel.addEventListener("change", function(){ liveUpdateMeter(); });
+  });
 
   // Meter gender chips (built first, since gender comes before sign in the layout)
   var genderRow = document.getElementById("pwm-gender-row");
@@ -552,12 +559,23 @@
   function updateGenderHint(){
     genderHintEl.textContent = "Use your " + (meterGenderValue === "male" ? "Sun" : "Moon") + " sign";
   }
+  function liveUpdateMeter(){
+    writeMeterProfile(currentMeterProfile());
+    var forecastIframe = document.querySelector('.pw-quick-panel[data-quick-panel="forecast"] iframe');
+    var meterIframe = document.querySelector('.pw-panel[data-panel="meter"] iframe');
+    [forecastIframe, meterIframe].forEach(function(ifr){
+      if (!ifr) return;
+      var doc = getDoc(ifr);
+      if (doc) applyMeterProfileToDoc(doc);
+    });
+  }
   Array.prototype.slice.call(genderRow.children).forEach(function(btn){
     btn.addEventListener("click", function(){
       meterGenderValue = this.getAttribute("data-gender");
       Array.prototype.slice.call(genderRow.children).forEach(function(b){ b.classList.remove("active"); });
       this.classList.add("active");
       updateGenderHint();
+      liveUpdateMeter();
     });
   });
   updateGenderHint();
@@ -577,6 +595,7 @@
       meterSignValue = parseInt(this.getAttribute("data-sign"), 10);
       Array.prototype.slice.call(signRow.children).forEach(function(b){ b.classList.remove("active"); });
       this.classList.add("active");
+      liveUpdateMeter();
     });
     signRow.appendChild(btn);
   });
@@ -591,6 +610,7 @@
       Array.prototype.slice.call(modeRow.children).forEach(function(b){ b.classList.remove("active"); });
       this.classList.add("active");
       customFields.style.display = (meterModeValue === "custom") ? "" : "none";
+      liveUpdateMeter();
     });
   });
 
@@ -598,38 +618,65 @@
   // text via the same lookup the widgets themselves use — no browser
   // GPS), plus quick-pick city chips. Same behavior for both Birth
   // Location and Current Location.
-  function wireLocationField(inputId, buttonId, chipsId){
+  function wireLocationField(inputId, buttonId, chipsId, statusId){
     var input = document.getElementById(inputId);
     var btn = document.getElementById(buttonId);
-    var chipsWrap = document.getElementById(chipsId);
-    QUICK_CITIES.forEach(function(c){
-      var chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = "pw-chip";
-      chip.textContent = c.name;
-      chip.addEventListener("click", function(){ input.value = c.name; });
-      chipsWrap.appendChild(chip);
-    });
+    var chipsWrap = chipsId ? document.getElementById(chipsId) : null;
+    var statusEl = statusId ? document.getElementById(statusId) : null;
+    if (chipsWrap){
+      QUICK_CITIES.forEach(function(c){
+        var chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "pw-chip";
+        chip.textContent = c.name;
+        chip.addEventListener("click", function(){
+          input.value = c.name;
+          if (statusEl){ statusEl.textContent = ""; statusEl.className = "pw-geo-status"; }
+        });
+        chipsWrap.appendChild(chip);
+      });
+    }
+    if (statusEl){
+      input.addEventListener("input", function(){
+        statusEl.textContent = ""; statusEl.className = "pw-geo-status";
+      });
+    }
     btn.addEventListener("click", function(){
       var place = input.value.trim();
       if (!place) return;
       var original = btn.textContent;
       btn.disabled = true; btn.textContent = "Searching…";
+      if (statusEl){ statusEl.textContent = "Searching…"; statusEl.className = "pw-geo-status"; }
       var url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(place);
       fetch(url, { headers: { "Accept": "application/json" } })
         .then(function(r){ return r.json(); })
         .then(function(res){
           if (res && res.length){
+            // Short name goes in the field itself (this is what feeds
+            // each tool's result heading); the full resolved address
+            // is shown underneath for confirmation only.
             input.value = res[0].display_name.split(",")[0];
+            if (statusEl){
+              statusEl.textContent = "Found: " + res[0].display_name;
+              statusEl.className = "pw-geo-status pw-geo-ok";
+            }
+          } else if (statusEl){
+            statusEl.textContent = "Could not find that place.";
+            statusEl.className = "pw-geo-status pw-geo-err";
           }
         })
-        .catch(function(){ /* leave the typed text as-is */ })
+        .catch(function(){
+          if (statusEl){
+            statusEl.textContent = "Could not find that place.";
+            statusEl.className = "pw-geo-status pw-geo-err";
+          }
+        })
         .then(function(){ btn.disabled = false; btn.textContent = original; });
     });
   }
   var currentPlaceInput = document.getElementById("pw-current-place");
-  wireLocationField("pw-place", "pw-place-locate", "pw-place-city-chips");
-  wireLocationField("pw-current-place", "pw-current-locate", "pw-current-city-chips");
+  wireLocationField("pw-place", "pw-place-locate", null, "pw-place-status");
+  wireLocationField("pw-current-place", "pw-current-locate", "pw-current-city-chips", "pw-current-status");
 
   // =========================================================
   // Load / save shared birth profile
@@ -932,14 +979,18 @@
     }
   }
 
-  // Birth-related input fields/buttons in the bottom (detailed) tools
-  // are hidden here since Birth Details up top now drives them —
-  // only each tool's own non-birth controls and results stay visible.
-  // "What Was Happening", "Where & When" and "Timeline" are left fully
-  // untouched (just get a courtesy birth-data prefill) per instructions.
+  // Birth-related input fields/buttons in every bottom (detailed) tool
+  // are hidden here since Birth Details / Current Location / Partner's
+  // Birth Details / Forecast Meter up top now drive them. Only each
+  // tool's own non-birth controls (Event fields, Mode/Category, Submit,
+  // Buy) and results stay visible.
   var DETAIL_HIDE = {
     "meter": [".zodiac-card", "#momentPanel"],
-    "location-checker": [".zodiac-card"]
+    "happening": ["#ppw-form fieldset:nth-of-type(2)"],
+    "where-when": ["#ww-birth-panel > .ww-field"],
+    "location-checker": [".zodiac-card"],
+    "partner-match": [".pm-two-col"],
+    "timeline": ["#ptw-birth-fields"]
   };
 
   function injectDetailCompact(doc, hideSelectors){
@@ -952,12 +1003,23 @@
     } catch(e){}
   }
 
+  function triggerWhereWhenLocate(doc){
+    if (!doc) return;
+    var btn = doc.getElementById("ww-locate-btn");
+    if (btn) btn.click();
+  }
+
   function autoTriggerDetail(name, doc){
     if (name === "meter") applyMeterProfileToDoc(doc);
     if (name === "location-checker"){
       applyCurrentLocationToDoc(doc);
       setTimeout(function(){ triggerLocationLocate(doc); }, 30);
     }
+    if (name === "where-when") setTimeout(function(){ triggerWhereWhenLocate(doc); }, 30);
+    if (name === "timeline") setTimeout(function(){
+      try { doc.defaultView.dispatchEvent(new Event("resize")); } catch(e){}
+      triggerTimeline(doc);
+    }, 150);
   }
 
   function applyProfileToIframe(panelName, iframeEl){
