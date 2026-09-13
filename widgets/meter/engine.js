@@ -276,15 +276,38 @@ function refresh(){
   setLoading(true);
 
   var M = window.__plutoMeter;
+  var requestedKey = key; // the inputs this specific request was sent for
   M.computeRemote(moment, state.activeSystem).then(function(result){
     state.busy = false;
+
+    // If activeSystem (or the moment) changed while this request was in
+    // flight — e.g. a saved-sign selection got restored/clicked before
+    // this Global request came back — then this result no longer matches
+    // what's currently selected. Painting it would show the right button
+    // highlighted with the wrong reading. Drop it and re-run refresh()
+    // for whatever is actually selected now instead.
+    var desiredKey = keyFor(currentMoment(), state.activeSystem);
+    if(requestedKey !== desiredKey){
+      refresh();
+      return;
+    }
+
     var at = moment.getTime(); // the moment actually being read — "now" snapshot, or the chosen custom date/time
     paintResult(result.pct, result.factors, { at: at, flags: result.flags });
     writeCache({ key: key, pct: result.pct, factors: result.factors, flags: result.flags, at: at });
   }).catch(function(err){
     state.busy = false;
+
+    // Same staleness check on the failure path — don't fall back to a
+    // cached/last-known reading for a selection that's no longer current.
+    var desiredKey = keyFor(currentMoment(), state.activeSystem);
+    if(requestedKey !== desiredKey){
+      refresh();
+      return;
+    }
+
     var fallback = readCache();
-    if(fallback){
+    if(fallback && fallback.key===requestedKey){
       paintResult(fallback.pct, fallback.factors, { stale:true, at: fallback.at, flags: fallback.flags });
     } else {
       document.getElementById("pctDisplay").textContent = "--%";
