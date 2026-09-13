@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow, noarchive">
 <title>Pluto Widgets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
@@ -20,7 +19,10 @@
 
   /* ---- quick-glance section (panel first, buttons below it) ---- */
   #pw-quick{ margin-bottom:18px; }
-  #pw-quick-results{ margin-bottom:10px; }
+  #pw-quick-results{
+    height:360px; overflow-y:auto; overflow-x:hidden; margin-bottom:10px;
+    border-radius:var(--radius-sm,8px); scrollbar-gutter:stable;
+  }
   .pw-quick-panel{ display:none; }
   .pw-quick-panel.active{ display:block; }
   .pw-quick-panel iframe{
@@ -35,25 +37,16 @@
   #pw-quick-tabs{
     display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px;
   }
-  /* Reused as-is for the "Buy Full Report" link row below, so both rows
-     of circular icons are guaranteed to stay the same size. */
   .pw-quick-tab{
     width:64px; height:64px; border-radius:50%; border:1px solid var(--card-border);
     background:var(--card); font-size:26px; line-height:1; cursor:pointer;
     display:flex; align-items:center; justify-content:center;
     color:var(--text-hi); transition:background .15s, border-color .15s, transform .1s;
-    text-decoration:none;
   }
   .pw-quick-tab:hover{ border-color:var(--accent); }
   .pw-quick-tab:active{ transform:scale(.95); }
   .pw-quick-tab.active{ background:var(--accent); border-color:var(--accent); color:var(--bg-0); }
   .pw-quick-tab svg{ width:26px; height:26px; }
-
-  /* ---- "Buy Full Report" links (replaces the old bottom widget tabs) ---- */
-  #pw-buy{ margin:18px 0 4px; }
-  #pw-buy-tabs{
-    display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px;
-  }
 
   /* ---- shared birth profile card (nested, no own background now) ---- */
   #pw-profile{
@@ -105,6 +98,30 @@
   #pw-profile.saved #pw-profile-form{ display:none; }
   #pw-profile.saved #pw-profile-summary{ display:flex; }
 
+  /* ---- icon-only detailed tab bar (below birth info; collapsed by default) ---- */
+  #pw-tabs{
+    display:flex; gap:6px; justify-content:center; flex-wrap:wrap;
+    background:var(--card); border:1px solid var(--card-border); border-radius:999px;
+    padding:6px; margin:0 0 14px;
+  }
+  .pw-tab{
+    width:42px; height:42px; border-radius:50%; border:1px solid transparent;
+    background:transparent; font-size:19px; line-height:1; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--text-hi); transition:background .15s, border-color .15s, transform .1s;
+  }
+  .pw-tab:hover{ border-color:var(--card-border); }
+  .pw-tab:active{ transform:scale(.94); }
+  .pw-tab.active{ background:var(--accent); border-color:var(--accent); color:var(--bg-0); }
+  .pw-tab svg{ width:20px; height:20px; }
+
+  /* ---- widget panels / iframes (collapsed until a tab is clicked) ---- */
+  .pw-panel{ display:none; }
+  .pw-panel.active{ display:block; }
+  .pw-panel iframe{
+    width:100%; min-height:900px; border:0; display:block; border-radius:var(--radius,14px);
+    background:transparent;
+  }
 </style>
 </head>
 <body data-theme="space">
@@ -121,7 +138,9 @@
         </div>
         <div class="pw-quick-panel" data-quick-panel="location">
           <div class="pw-quick-title">Location</div>
-          <iframe data-src="widgets/location-checker/index.html" title="Location"></iframe>
+          <div id="pw-location-quick-slot">
+            <iframe id="pw-shared-location-iframe" data-src="widgets/location-checker/index.html" title="Location"></iframe>
+          </div>
         </div>
         <div class="pw-quick-panel" data-quick-panel="partner">
           <div class="pw-quick-title">Partner</div>
@@ -130,14 +149,6 @@
         <div class="pw-quick-panel" data-quick-panel="timeline">
           <div class="pw-quick-title">Timeline</div>
           <iframe data-src="widgets/timeline/index.html" title="Timeline"></iframe>
-        </div>
-        <div class="pw-quick-panel" data-quick-panel="ask">
-          <div class="pw-quick-title">Ask</div>
-          <iframe data-src="widgets/where-when/index.html" title="Ask"></iframe>
-        </div>
-        <div class="pw-quick-panel" data-quick-panel="transit">
-          <div class="pw-quick-title">Transit</div>
-          <iframe data-src="widgets/happening/index.html" title="Transit"></iframe>
         </div>
       </div>
 
@@ -164,18 +175,6 @@
             <line x1="6" y1="20" x2="6" y2="14"/>
             <line x1="12" y1="20" x2="12" y2="8"/>
             <line x1="18" y1="20" x2="18" y2="4"/>
-          </svg>
-        </button>
-        <button class="pw-quick-tab" data-quick="ask" title="Ask — Where &amp; When" aria-label="Ask">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="7"/>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-        </button>
-        <button class="pw-quick-tab" data-quick="transit" title="Transit — What Was Happening" aria-label="Transit">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9"/>
-            <polyline points="12 7 12 12 16 14"/>
           </svg>
         </button>
       </nav>
@@ -359,29 +358,62 @@
     </div>
   </div>
 
-  <div id="pw-buy">
-    <div class="pw-quick-title">Buy Full Report</div>
-    <nav id="pw-buy-tabs" aria-label="Buy full report">
-      <a class="pw-quick-tab" id="pw-buy-timeline" href="#" target="_blank" rel="noopener noreferrer" title="100-Year Pluto Phases Timeline — full report" aria-label="Buy Timeline Report">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="6" y1="20" x2="6" y2="14"/>
-          <line x1="12" y1="20" x2="12" y2="8"/>
-          <line x1="18" y1="20" x2="18" y2="4"/>
-        </svg>
-      </a>
-      <a class="pw-quick-tab" id="pw-buy-ask" href="#" target="_blank" rel="noopener noreferrer" title="Time &amp; Location Full Report" aria-label="Buy Where and When Report">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="7"/>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-      </a>
-      <a class="pw-quick-tab" id="pw-buy-transit" href="#" target="_blank" rel="noopener noreferrer" title="Pluto Phases Transit Report" aria-label="Buy Transit Report">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="9"/>
-          <polyline points="12 7 12 12 16 14"/>
-        </svg>
-      </a>
-    </nav>
+  <nav id="pw-tabs" role="tablist" aria-label="Choose a tool">
+    <button class="pw-tab" data-target="meter" title="Pluto Phases Meter (live reading)" aria-label="Pluto Phases Meter">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.5 9.5H5.2a2.8 2.8 0 1 1 1.05-5.4A2.6 2.6 0 0 1 10.5 9.5z"/>
+        <path d="M19.5 19H9.8a4.3 4.3 0 1 1 1.65-8.3A3.8 3.8 0 0 1 19.5 19z"/>
+      </svg>
+    </button>
+    <button class="pw-tab" data-target="location-checker" title="Location Checker" aria-label="Location Checker">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s7-7.58 7-12A7 7 0 0 0 5 10c0 4.42 7 12 7 12z"/>
+        <circle cx="12" cy="10" r="2.5"/>
+      </svg>
+    </button>
+    <button class="pw-tab" data-target="partner-match" title="Partner Match" aria-label="Partner Match">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
+      </svg>
+    </button>
+    <button class="pw-tab" data-target="timeline" title="Pluto Phases Timeline (3-year)" aria-label="Pluto Phases Timeline">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="6" y1="20" x2="6" y2="14"/>
+        <line x1="12" y1="20" x2="12" y2="8"/>
+        <line x1="18" y1="20" x2="18" y2="4"/>
+      </svg>
+    </button>
+    <button class="pw-tab" data-target="where-when" title="Where &amp; When (life event finder)" aria-label="Where and When">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </button>
+    <button class="pw-tab" data-target="happening" title="What Was Happening (single date)" aria-label="What Was Happening">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"/>
+        <polyline points="12 7 12 12 16 14"/>
+      </svg>
+    </button>
+  </nav>
+
+  <div class="pw-panel" data-panel="meter">
+    <iframe data-src="widgets/meter/index.html" title="Pluto Phases Meter"></iframe>
+  </div>
+  <div class="pw-panel" data-panel="happening">
+    <iframe data-src="widgets/happening/index.html" title="What Was Happening"></iframe>
+  </div>
+  <div class="pw-panel" data-panel="where-when">
+    <iframe data-src="widgets/where-when/index.html" title="Where and When"></iframe>
+  </div>
+  <div class="pw-panel" data-panel="location-checker">
+    <div id="pw-location-detail-slot"></div>
+  </div>
+  <div class="pw-panel" data-panel="partner-match">
+    <iframe data-src="widgets/partner-match/index.html" title="Partner Match"></iframe>
+  </div>
+  <div class="pw-panel" data-panel="timeline">
+    <iframe data-src="widgets/timeline/index.html" title="Pluto Phases Timeline"></iframe>
   </div>
 
 </div>
@@ -402,27 +434,6 @@
   var METER_SIGN_NAMES = ["Global","Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
   var METER_SIGN_SYMBOLS = ["\uD83C\uDF10","\u2648","\u2649","\u264A","\u264B","\u264C","\u264D","\u264E","\u264F","\u2650","\u2651","\u2652","\u2653"];
   var DEFAULT_METER = { sign:0, gender:"male", mode:"now", month:1, day:1, year:2024, hour:12, minute:0, ampm:"PM" };
-  // Same JotForm used by the Timeline, Where & When, and What Was Happening
-  // widgets' own "buy" / "report" links (same form ID + field names in all
-  // three) — reused here to build the three "Buy Full Report" icon links,
-  // each with the current shared birth profile prefilled and only the
-  // "service" checkbox differing per report.
-  var REPORT_JOTFORM_ID = "262381784349064";
-  var REPORT_JOTFORM_FIELDS = {
-    birthDateMonth: "q2_datetime0[month]",
-    birthDateDay: "q2_datetime0[day]",
-    birthDateYear: "q2_datetime0[year]",
-    birthTimeInput: "q3_time1[timeInput]",
-    birthTimeAmpm: "q3_time1[ampm]",
-    birthPlace: "q4_textbox2",
-    gender: "q5_radio3",
-    service: "q7_checkbox5"
-  };
-  var REPORT_SERVICE_LABELS = {
-    timeline: "100-Year Pluto Phases Timeline ($60)",
-    ask: "Time and Location Full Report",
-    transit: "Pluto Phases Transit Report"
-  };
   // Same 17 cities the Location Checker widget itself offers as chips.
   var QUICK_CITIES = [
     { name: "Bangkok" }, { name: "Hong Kong" }, { name: "London" }, { name: "Sydney" },
@@ -465,15 +476,16 @@
   }
 
   // =========================================================
-  // Quick-glance section — always shows exactly one full widget,
-  // just its own heading/footer swapped out for our compact heading.
-  // There is no separate "bottom" widget tier any more: each icon here
-  // is the only iframe for that tool (one Location Checker instance
-  // total, not two, since its ~6MB data file only ever loads once).
+  // Detailed tab row (below birth info) — collapsed by default
   // =========================================================
-  var quickTabs = Array.prototype.slice.call(document.querySelectorAll(".pw-quick-tab"));
-  var quickPanels = Array.prototype.slice.call(document.querySelectorAll(".pw-quick-panel"));
+  var tabs = Array.prototype.slice.call(document.querySelectorAll(".pw-tab"));
+  var panels = Array.prototype.slice.call(document.querySelectorAll(".pw-panel"));
 
+  // Iframes only start loading the moment their panel is actually opened,
+  // instead of all ten loading in the background on page load — one of
+  // them (Location Checker) ships a ~6MB local data file, so loading it
+  // twice (quick view + bottom tab) upfront was competing with every
+  // other widget for bandwidth on a person's very first visit.
   function ensureIframeLoaded(panelEl){
     var iframe = panelEl.querySelector("iframe");
     if (iframe && !iframe.getAttribute("src") && iframe.dataset.src){
@@ -497,14 +509,55 @@
     }, 50);
   }
 
+  // Location Checker is the one widget with an expensive (~6MB) local
+  // data file, so rather than two separate iframes for the quick view
+  // and the bottom tab (each loading that file on its own), there's a
+  // single shared iframe that physically moves between the two slots.
+  // Moving an already-loaded iframe via appendChild does not reload it.
+  function activateTab(name){
+    var alreadyActive = tabs.some(function(t){
+      return t.getAttribute("data-target") === name && t.classList.contains("active");
+    });
+    if (alreadyActive){
+      tabs.forEach(function(t){ t.classList.remove("active"); });
+      panels.forEach(function(p){ p.classList.remove("active"); });
+      return;
+    }
+    tabs.forEach(function(t){ t.classList.toggle("active", t.getAttribute("data-target") === name); });
+    panels.forEach(function(p){
+      var isMatch = p.getAttribute("data-panel") === name;
+      p.classList.toggle("active", isMatch);
+      if (isMatch){
+        if (name === "location-checker") showSharedLocationIframe("detail");
+        else {
+          var iframe = ensureIframeLoaded(p);
+          if (name === "timeline") refreshTimelineOnShow(iframe);
+        }
+      }
+    });
+  }
+  tabs.forEach(function(t){
+    t.addEventListener("click", function(){ activateTab(t.getAttribute("data-target")); });
+  });
+  // no panel active on load — user picks one
+
+  // =========================================================
+  // Quick-glance section — always shows exactly one result
+  // =========================================================
+  var quickTabs = Array.prototype.slice.call(document.querySelectorAll(".pw-quick-tab"));
+  var quickPanels = Array.prototype.slice.call(document.querySelectorAll(".pw-quick-panel"));
+
   function activateQuick(name){
     quickTabs.forEach(function(t){ t.classList.toggle("active", t.getAttribute("data-quick") === name); });
     quickPanels.forEach(function(p){
       var isMatch = p.getAttribute("data-quick-panel") === name;
       p.classList.toggle("active", isMatch);
       if (isMatch){
-        var iframe = ensureIframeLoaded(p);
-        if (name === "timeline") refreshTimelineOnShow(iframe);
+        if (name === "location") showSharedLocationIframe("quick");
+        else {
+          var iframe = ensureIframeLoaded(p);
+          if (name === "timeline") refreshTimelineOnShow(iframe);
+        }
       }
     });
   }
@@ -512,6 +565,55 @@
     t.addEventListener("click", function(){ activateQuick(t.getAttribute("data-quick")); });
   });
   activateQuick("forecast"); // always one visible by default — loads immediately
+
+  // =========================================================
+  // Shared Location Checker iframe — one instance, physically moved
+  // between the quick-view slot and the bottom-tab slot, instead of
+  // two separate iframes each loading its ~6MB data file.
+  // =========================================================
+  var sharedLocationIframe = document.getElementById("pw-shared-location-iframe");
+  var locationQuickSlot = document.getElementById("pw-location-quick-slot");
+  var locationDetailSlot = document.getElementById("pw-location-detail-slot");
+
+  function currentLocationMode(){
+    return sharedLocationIframe.parentElement === locationDetailSlot ? "detail" : "quick";
+  }
+
+  function refreshSharedLocation(mode){
+    var doc = getDoc(sharedLocationIframe);
+    if (!doc) return; // not loaded yet — its own 'load' listener will call this once ready
+    if (mode === "detail"){
+      applyProfileToIframe("location-checker", sharedLocationIframe);
+      makeIframeBackgroundTransparent(sharedLocationIframe);
+      sharedLocationIframe.classList.add("pw-ready");
+    } else {
+      injectCompactCss(doc, QUICK_HIDE["location"] || [], QUICK_EXTRA_CSS["location"] || "");
+      applyProfileToQuickIframe("location", sharedLocationIframe);
+      makeIframeBackgroundTransparent(sharedLocationIframe);
+      autoSizeIframe(sharedLocationIframe, doc);
+      sharedLocationIframe.classList.add("pw-ready");
+    }
+  }
+
+  function showSharedLocationIframe(mode){
+    var targetSlot = mode === "detail" ? locationDetailSlot : locationQuickSlot;
+    if (sharedLocationIframe.parentElement !== targetSlot) targetSlot.appendChild(sharedLocationIframe);
+    if (!sharedLocationIframe.getAttribute("src") && sharedLocationIframe.dataset.src){
+      sharedLocationIframe.setAttribute("src", sharedLocationIframe.dataset.src);
+    }
+    refreshSharedLocation(mode);
+  }
+
+  sharedLocationIframe.addEventListener("load", function(){
+    refreshSharedLocation(currentLocationMode());
+  });
+
+  // Live edits (birth details, current location) only refresh whichever
+  // mode the shared iframe is currently showing — switching tabs later
+  // re-syncs with the latest data anyway via showSharedLocationIframe().
+  function refreshSharedLocationIfCurrent(mode){
+    if (currentLocationMode() === mode) refreshSharedLocation(mode);
+  }
 
   // =========================================================
   // Populate the shared birth-profile selects
@@ -619,11 +721,12 @@
   function liveUpdateMeter(){
     writeMeterProfile(currentMeterProfile());
     var forecastIframe = document.querySelector('.pw-quick-panel[data-quick-panel="forecast"] iframe');
-    if (forecastIframe){
-      var doc = getDoc(forecastIframe);
+    var meterIframe = document.querySelector('.pw-panel[data-panel="meter"] iframe');
+    [forecastIframe, meterIframe].forEach(function(ifr){
+      if (!ifr) return;
+      var doc = getDoc(ifr);
       if (doc) applyMeterProfileToDoc(doc);
-    }
-    refreshBuyLinks();
+    });
   }
   Array.prototype.slice.call(genderRow.children).forEach(function(btn){
     btn.addEventListener("click", function(){
@@ -828,36 +931,6 @@
     }
     return out;
   }
-  function pad2(n){ n = String(n); return n.length < 2 ? "0" + n : n; }
-
-  function buildReportUrl(serviceLabel){
-    var p = readProfile() || DEFAULT_PROFILE;
-    var m = readMeterProfile() || DEFAULT_METER;
-    var params = [];
-    function add(key, value){
-      if (!key) return;
-      params.push(encodeURIComponent(key) + "=" + encodeURIComponent(value));
-    }
-    add(REPORT_JOTFORM_FIELDS.birthDateMonth, pad2(p.month));
-    add(REPORT_JOTFORM_FIELDS.birthDateDay, pad2(p.day));
-    add(REPORT_JOTFORM_FIELDS.birthDateYear, p.year);
-    add(REPORT_JOTFORM_FIELDS.birthTimeInput, pad2(p.hour) + ":" + pad2(p.minute));
-    add(REPORT_JOTFORM_FIELDS.birthTimeAmpm, p.ampm);
-    add(REPORT_JOTFORM_FIELDS.birthPlace, p.place || "");
-    add(REPORT_JOTFORM_FIELDS.gender, m.gender === "female" ? "Female" : "Male");
-    add(REPORT_JOTFORM_FIELDS.service, serviceLabel);
-    return "https://form.jotform.com/" + REPORT_JOTFORM_ID + "?" + params.join("&");
-  }
-
-  function refreshBuyLinks(){
-    var timelineLink = document.getElementById("pw-buy-timeline");
-    var askLink = document.getElementById("pw-buy-ask");
-    var transitLink = document.getElementById("pw-buy-transit");
-    if (timelineLink) timelineLink.href = buildReportUrl(REPORT_SERVICE_LABELS.timeline);
-    if (askLink) askLink.href = buildReportUrl(REPORT_SERVICE_LABELS.ask);
-    if (transitLink) transitLink.href = buildReportUrl(REPORT_SERVICE_LABELS.transit);
-  }
-
   function fillFormFromProfile(p){
     if (!p) return;
     monthSel.value = p.month; daySel.value = p.day; yearSel.value = p.year;
@@ -925,13 +998,18 @@
   fillMeterFormFromProfile(existingMeter);
   summaryText.innerHTML = formatSummary(existing, existingPartner);
   profileCard.classList.add("saved");
-  refreshBuyLinks();
 
   // Every field applies live — no Save step needed. Each change writes
   // straight to storage and pushes only into the iframes that actually
   // use that data, so editing (say) the partner's details doesn't also
   // re-trigger Location Checker's geocode lookup.
+  function pushToDetail(panelName){
+    if (panelName === "location-checker"){ refreshSharedLocationIfCurrent("detail"); return; }
+    var el = document.querySelector('.pw-panel[data-panel="' + panelName + '"] iframe');
+    if (el) applyProfileToIframe(panelName, el);
+  }
   function pushToQuick(name){
+    if (name === "location"){ refreshSharedLocationIfCurrent("quick"); return; }
     var el = document.querySelector('.pw-quick-panel[data-quick-panel="' + name + '"] iframe');
     if (el) applyProfileToQuickIframe(name, el);
   }
@@ -939,17 +1017,19 @@
     var p = currentProfile();
     writeProfile(p);
     summaryText.innerHTML = formatSummary(p, currentPartnerProfile());
-    ["location","timeline","partner","ask","transit"].forEach(pushToQuick);
-    refreshBuyLinks();
+    ["happening","where-when","location-checker","timeline","partner-match"].forEach(pushToDetail);
+    ["location","timeline","partner"].forEach(pushToQuick);
   }
   function liveApplyCurrentLocation(){
     writeCurrentLocation(currentCurrentLocation());
+    pushToDetail("location-checker");
     pushToQuick("location");
   }
   function liveApplyPartner(){
     var partner = currentPartnerProfile();
     writePartnerProfile(partner);
     summaryText.innerHTML = formatSummary(currentProfile(), partner);
+    pushToDetail("partner-match");
     pushToQuick("partner");
   }
   [monthSel, daySel, yearSel, hourSel, minuteSel, ampmSel, timezoneSel].forEach(function(sel){
@@ -973,8 +1053,7 @@
   });
 
   // =========================================================
-  // Field maps: which shared-profile field goes into which element id
-  // inside each widget's own iframe
+  // Push the profile into each widget's iframe (detailed tabs)
   // =========================================================
   var WIDGET_MAP = {
     "happening": [
@@ -1008,23 +1087,11 @@
     ["hour","pm-p2-hour"], ["minute","pm-p2-minute"], ["ampm","pm-p2-ampm"],
     ["timezone","pm-p2-utc"]
   ];
-  // Quick-panel name -> underlying widget key, used to look up field
-  // maps / hide-lists below without duplicating them per quick name.
-  var QUICK_TO_WIDGET = {
-    "forecast": "meter",
-    "location": "location-checker",
-    "partner": "partner-match",
-    "timeline": "timeline",
-    "ask": "where-when",
-    "transit": "happening"
-  };
   // Same field mappings, reused for the quick-glance iframes.
   var QUICK_MAP = {
     "location": WIDGET_MAP["location-checker"],
     "partner": WIDGET_MAP["partner-match"],
-    "timeline": WIDGET_MAP["timeline"],
-    "ask": WIDGET_MAP["where-when"],
-    "transit": WIDGET_MAP["happening"]
+    "timeline": WIDGET_MAP["timeline"]
   };
 
   function fireEvents(el){
@@ -1138,36 +1205,31 @@
     label.textContent = signName;
   }
 
-  // Each quick panel shows the real widget as-is — only its own heading
-  // and footer are hidden (the quick-view title above already supplies
-  // the heading), plus the birth-detail fields that Birth Details /
-  // Current Location / Partner's Birth Details / Forecast Meter up top
-  // now drive instead. Everything else (each tool's own non-birth
-  // controls, results, and — for Ask/Transit — their Locate/Submit
-  // buttons) stays visible and working exactly as in the original widget.
-  var WIDGET_HIDE = {
-    "meter": [".title-block", "footer", ".zodiac-card", "#momentPanel"],
-    "location-checker": ["header", "footer", ".zodiac-card"],
-    "partner-match": ["header", "footer", ".pm-two-col"],
-    // "Show My Timeline" / "100 Years ($60)" are unnecessary here: the
-    // reading auto-triggers on load, and the buy button is superseded
-    // by the "Buy Full Report" icon row below.
-    "timeline": ["header", "footer", "#ptw-birth-fields", "#ptw-btn-row"],
-    "where-when": [".ww-eyebrow", "footer", "#ww-birth-panel > .ww-field"],
-    // .ppw-offers is the inline "Go Deeper" upsell shown after a result —
-    // redundant now that the same report has its own Buy Full Report icon.
-    "happening": [".ppw-eyebrow", "h2.ppw-title", ".ppw-sub", "footer", "#ppw-form fieldset:nth-of-type(2)", ".ppw-offers"]
+  // Birth-related input fields/buttons in every bottom (detailed) tool
+  // are hidden here since Birth Details / Current Location / Partner's
+  // Birth Details / Forecast Meter up top now drive them. Only each
+  // tool's own non-birth controls (Event fields, Mode/Category, Submit,
+  // Buy) and results stay visible.
+  var DETAIL_HIDE = {
+    "meter": [".zodiac-card", "#momentPanel"],
+    "happening": ["#ppw-form fieldset:nth-of-type(2)"],
+    "where-when": ["#ww-birth-panel > .ww-field"],
+    "location-checker": [".zodiac-card"],
+    "partner-match": [".pm-two-col"],
+    "timeline": ["#ptw-birth-fields"]
   };
   // Timeline's own CSS caps .app at a fixed 800px regardless of how much
-  // space is actually available in the panel — force it fluid here too.
-  // Meter's heading sits in a flex header alongside a live clock/refresh
-  // button that still needs to work, so only the heading itself is
-  // hidden above — this just re-justifies what's left of that row.
-  var WIDGET_EXTRA_CSS = {
-    "meter": "header{justify-content:flex-end !important;}",
+  // space is actually available in the panel — force it fluid here too,
+  // same as the quick-view treatment already does.
+  var DETAIL_EXTRA_CSS = {
     "timeline": "body{width:100% !important;} .app{max-width:100% !important; width:100% !important;} #ptw-timeline,.ppt-root,.ppt-track{width:100% !important; max-width:100% !important;}"
   };
 
+  // Both compact modes below write into this single overwritable style
+  // tag per iframe (rather than each appending a brand-new <style>), so
+  // an iframe that switches modes (currently only the shared Location
+  // Checker iframe) gets a clean ruleset each time instead of old and
+  // new hide-lists stacking on top of each other.
   function setModeStyle(doc, cssText){
     if (!doc || !doc.head) return;
     try {
@@ -1179,6 +1241,12 @@
       }
       style.textContent = cssText || "";
     } catch(e){}
+  }
+
+  function injectDetailCompact(doc, hideSelectors, extraCss){
+    if (!doc) return;
+    var css = (hideSelectors && hideSelectors.length) ? hideSelectors.join(",") + "{ display:none !important; }" : "";
+    setModeStyle(doc, css + (extraCss || ""));
   }
 
   function triggerWhereWhenLocate(doc){
@@ -1193,6 +1261,31 @@
     if (btn) btn.click();
   }
 
+  function autoTriggerDetail(name, doc){
+    if (name === "meter") applyMeterProfileToDoc(doc);
+    if (name === "location-checker"){
+      applyCurrentLocationToDoc(doc);
+      var loc = readCurrentLocation() || DEFAULT_CURRENT_LOCATION;
+      setTimeout(function(){ triggerLocationLocate(doc, loc.place); }, 30);
+    }
+    if (name === "where-when") setTimeout(function(){ triggerWhereWhenLocate(doc); }, 30);
+    if (name === "happening") setTimeout(function(){ triggerHappeningLocate(doc); }, 30);
+    if (name === "timeline") setTimeout(function(){
+      try { doc.defaultView.dispatchEvent(new Event("resize")); } catch(e){}
+      triggerTimeline(doc);
+    }, 150);
+  }
+
+  function applyProfileToIframe(panelName, iframeEl){
+    var p = readProfile();
+    if (!p) return;
+    var doc = getDoc(iframeEl);
+    applyFieldMap(doc, p, WIDGET_MAP[panelName]);
+    if (panelName === "partner-match") applyFieldMap(doc, readPartnerProfile() || DEFAULT_PARTNER, PARTNER2_MAP);
+    injectDetailCompact(doc, DETAIL_HIDE[panelName], DETAIL_EXTRA_CSS[panelName]);
+    autoTriggerDetail(panelName, doc);
+  }
+
   function makeIframeBackgroundTransparent(iframeEl){
     var doc = getDoc(iframeEl);
     if (!doc || !doc.head) return;
@@ -1204,11 +1297,53 @@
     } catch(e){}
   }
 
+  function applyProfileToAllIframes(){
+    panels.forEach(function(panel){
+      var name = panel.getAttribute("data-panel");
+      if (name === "location-checker") return; // handled below
+      var iframe = panel.querySelector("iframe");
+      if (iframe) applyProfileToIframe(name, iframe);
+    });
+    quickPanels.forEach(function(panel){
+      var name = panel.getAttribute("data-quick-panel");
+      if (name === "location") return; // handled below
+      var iframe = panel.querySelector("iframe");
+      if (iframe) applyProfileToQuickIframe(name, iframe);
+    });
+    refreshSharedLocation(currentLocationMode());
+  }
+
+  panels.forEach(function(panel){
+    var name = panel.getAttribute("data-panel");
+    var iframe = panel.querySelector("iframe");
+    if (!iframe) return;
+    iframe.addEventListener("load", function(){
+      applyProfileToIframe(name, iframe);
+      makeIframeBackgroundTransparent(iframe);
+    });
+  });
+
   // =========================================================
-  // Quick-glance iframes: fill birth data, hide only the widget's
-  // own heading/footer/birth-detail fields, auto-trigger a reading
-  // where that's possible, keep sized to fit the real content.
+  // Quick-glance iframes: fill birth data, hide everything but
+  // the result-bar section, auto-trigger a reading, keep sized
+  // to just that content (with a stable minimum to reduce jump).
   // =========================================================
+
+  // hide-selectors per quick view — only the result section
+  // (already a self-contained card) and, for timeline, its
+  // legend, stay visible. No interpretation/detail text.
+  var QUICK_HIDE = {
+    "forecast": [".title-block",".collapsible-panel",".zodiac-card",".breakdown-card","footer","#outOfRange"],
+    "location": ["header",".zodiac-card","footer","#lc-error",".lc-tabs","#lc-tab-box"],
+    "partner": ["header",".collapsible-panel",".pm-two-col",".breakdown-card","footer","#pm-error"],
+    "timeline": ["header",".ppt-hint",".zodiac-card","footer","#ptw-detail"]
+  };
+
+  var QUICK_EXTRA_CSS = {
+    "forecast": "header{justify-content:flex-end !important;}",
+    "timeline": "body{width:100% !important;} #ptw-timeline,.ppt-root,.ppt-track{width:100% !important; max-width:100% !important;}"
+  };
+
   function injectCompactCss(doc, hideSelectors, extraCss){
     if (!doc) return;
     var css =
@@ -1238,6 +1373,26 @@
     }
   }
 
+  function zodiacSignFromDate(month, day){
+    var ranges = [
+      ["Capricorn", 1, 19], ["Aquarius", 1, 20, 2, 18], ["Pisces", 2, 19, 3, 20],
+      ["Aries", 3, 21, 4, 19], ["Taurus", 4, 20, 5, 20], ["Gemini", 5, 21, 6, 20],
+      ["Cancer", 6, 21, 7, 22], ["Leo", 7, 23, 8, 22], ["Virgo", 8, 23, 9, 22],
+      ["Libra", 9, 23, 10, 22], ["Scorpio", 10, 23, 11, 21], ["Sagittarius", 11, 22, 12, 21],
+      ["Capricorn", 12, 22, 12, 31]
+    ];
+    for (var i = 0; i < ranges.length; i++){
+      var r = ranges[i];
+      if (r.length === 3){
+        if (month === r[1] && day <= r[2]) return r[0];
+      } else {
+        var startM = r[1], startD = r[2], endM = r[3], endD = r[4];
+        if ((month === startM && day >= startD) || (month === endM && day <= endD)) return r[0];
+      }
+    }
+    return "Aries";
+  }
+
   // Prefer an exact-match city chip inside the widget (instant, uses its
   // own hardcoded coordinates) over the generic Locate button, which always
   // does a live Nominatim search — slower, and can resolve to a slightly
@@ -1259,6 +1414,17 @@
     if (chip){ chip.click(); return; }
     var btn = doc.getElementById("lc-geo-btn");
     if (btn) btn.click();
+  }
+
+  function triggerForecast(doc, p){
+    if (!doc) return;
+    var sign = zodiacSignFromDate(p.month, p.day);
+    var wrap = doc.getElementById("zodiacRow");
+    if (!wrap) return;
+    var btn = Array.prototype.slice.call(wrap.children).filter(function(b){
+      return b.title === sign;
+    })[0];
+    if (btn && !btn.classList.contains("active")) btn.click();
   }
 
   function triggerTimeline(doc){
@@ -1288,22 +1454,17 @@
       try { doc.defaultView.dispatchEvent(new Event("resize")); } catch(e){}
       triggerTimeline(doc);
     }, 150);
-    // Ask and Transit can't fully auto-trigger (Ask needs a mode/category
-    // choice, Transit needs an event date — both are genuinely up to the
-    // person), but their birth-place field can still be geocoded for them.
-    if (name === "ask") setTimeout(function(){ triggerWhereWhenLocate(doc); }, 30);
-    if (name === "transit") setTimeout(function(){ triggerHappeningLocate(doc); }, 30);
   }
 
   quickPanels.forEach(function(panel){
     var name = panel.getAttribute("data-quick-panel");
-    var widgetName = QUICK_TO_WIDGET[name] || name;
+    if (name === "location") return; // shared iframe has its own dedicated 'load' handler
     var iframe = panel.querySelector("iframe");
     if (!iframe) return;
     iframe.addEventListener("load", function(){
       var doc = getDoc(iframe);
       makeIframeBackgroundTransparent(iframe);
-      injectCompactCss(doc, WIDGET_HIDE[widgetName] || [], WIDGET_EXTRA_CSS[widgetName] || "");
+      injectCompactCss(doc, QUICK_HIDE[name] || [], QUICK_EXTRA_CSS[name] || "");
       applyProfileToQuickIframe(name, iframe);
       autoSizeIframe(iframe, doc);
       // reveal only once compacted + filled, to avoid a flash of the
@@ -1322,10 +1483,25 @@
   // Loading them one at a time (not all at once) avoids the original
   // problem of everything competing for bandwidth on first visit.
   // =========================================================
-  var PRELOAD_QUEUE = ["location", "partner", "timeline", "ask", "transit"];
+  var PRELOAD_QUEUE = [
+    { kind: "quick", name: "location" },
+    { kind: "quick", name: "partner" },
+    { kind: "quick", name: "timeline" },
+    { kind: "detail", name: "meter" },
+    { kind: "detail", name: "happening" },
+    { kind: "detail", name: "where-when" },
+    { kind: "detail", name: "partner-match" },
+    { kind: "detail", name: "timeline" },
+    { kind: "detail", name: "location-checker" }
+  ];
 
-  function findQueuedIframe(name){
-    return document.querySelector('.pw-quick-panel[data-quick-panel="' + name + '"] iframe');
+  function findQueuedIframe(item){
+    if (item.name === "location") return sharedLocationIframe;
+    if (item.name === "location-checker") return null; // same iframe as "location" above — already covered
+    var selector = item.kind === "quick"
+      ? '.pw-quick-panel[data-quick-panel="' + item.name + '"] iframe'
+      : '.pw-panel[data-panel="' + item.name + '"] iframe';
+    return document.querySelector(selector);
   }
 
   function preloadNext(i){
