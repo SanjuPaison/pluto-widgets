@@ -241,6 +241,15 @@
 
         <h2 class="pw-sub-h2">Your Birth Details</h2>
         <div class="pw-row">
+          <div style="flex:1 1 100%;">
+            <label>Gender</label>
+            <div class="pw-chip-row" id="pw-gender-row">
+              <button type="button" class="pw-chip active" data-gender="male">Male</button>
+              <button type="button" class="pw-chip" data-gender="female">Female</button>
+            </div>
+          </div>
+        </div>
+        <div class="pw-row">
           <div>
             <label for="pw-month">Month</label>
             <select id="pw-month"></select>
@@ -307,6 +316,15 @@
         </div>
 
         <h2 class="pw-sub-h2">Partner's Birth Details</h2>
+        <div class="pw-row">
+          <div style="flex:1 1 100%;">
+            <label>Gender</label>
+            <div class="pw-chip-row" id="pwp-gender-row">
+              <button type="button" class="pw-chip" data-gender="male">Male</button>
+              <button type="button" class="pw-chip active" data-gender="female">Female</button>
+            </div>
+          </div>
+        </div>
         <div class="pw-row">
           <div>
             <label for="pwp-month">Month</label>
@@ -427,9 +445,9 @@
   var CURRENT_LOCATION_KEY = "plutoWidgets.currentLocation";
   var METER_STORAGE_KEY = "plutoWidgets.meterSettings";
   var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  var DEFAULT_PROFILE = { month:1, day:1, year:1990, hour:12, minute:0, ampm:"PM", timeUnknown:false, place:"Kolkata, India", timezone:5.5 };
+  var DEFAULT_PROFILE = { month:1, day:1, year:1990, hour:12, minute:0, ampm:"PM", timeUnknown:false, place:"Kolkata, India", timezone:5.5, gender:"male" };
   // Default partner profile, editable in the Partner's Birth Details section.
-  var DEFAULT_PARTNER = { month:6, day:15, year:1988, hour:10, minute:30, ampm:"AM", timezone:5.5 };
+  var DEFAULT_PARTNER = { month:6, day:15, year:1988, hour:10, minute:30, ampm:"AM", timezone:5.5, gender:"female" };
   var DEFAULT_CURRENT_LOCATION = { place: "London, UK" };
   var METER_SIGN_NAMES = ["Global","Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
   var METER_SIGN_SYMBOLS = ["\uD83C\uDF10","\u2648","\u2649","\u264A","\u264B","\u264C","\u264D","\u264E","\u264F","\u2650","\u2651","\u2652","\u2653"];
@@ -629,6 +647,18 @@
   var timezoneSel = document.getElementById("pw-timezone");
   populateTimezoneSelect(timezoneSel);
 
+  // Person 1 (your own) gender — feeds Partner Match's "Person 1" side,
+  // same style/pattern as the Forecast Meter's own gender chips below.
+  var genderRow1 = document.getElementById("pw-gender-row");
+  var person1GenderValue = "male";
+  Array.prototype.slice.call(genderRow1.children).forEach(function(btn){
+    btn.addEventListener("click", function(){
+      person1GenderValue = this.getAttribute("data-gender");
+      setActiveGenderChip(genderRow1, person1GenderValue);
+      liveApplyBirthDetails();
+    });
+  });
+
   MONTHS.forEach(function(name, i){
     var o = document.createElement("option"); o.value = i + 1; o.textContent = name; monthSel.appendChild(o);
   });
@@ -658,6 +688,17 @@
   var pAmpmSel = document.getElementById("pwp-ampm");
   var pTimezoneSel = document.getElementById("pwp-timezone");
   populateTimezoneSelect(pTimezoneSel);
+
+  // Person 2 (partner's) gender — feeds Partner Match's "Person 2" side.
+  var genderRow2 = document.getElementById("pwp-gender-row");
+  var person2GenderValue = "female";
+  Array.prototype.slice.call(genderRow2.children).forEach(function(btn){
+    btn.addEventListener("click", function(){
+      person2GenderValue = this.getAttribute("data-gender");
+      setActiveGenderChip(genderRow2, person2GenderValue);
+      liveApplyPartner();
+    });
+  });
 
   MONTHS.forEach(function(name, i){
     var o = document.createElement("option"); o.value = i + 1; o.textContent = name; pMonthSel.appendChild(o);
@@ -931,6 +972,12 @@
     }
     return out;
   }
+  function setActiveGenderChip(row, gender){
+    if (!row) return;
+    Array.prototype.slice.call(row.children).forEach(function(b){
+      b.classList.toggle("active", b.getAttribute("data-gender") === gender);
+    });
+  }
   function fillFormFromProfile(p){
     if (!p) return;
     monthSel.value = p.month; daySel.value = p.day; yearSel.value = p.year;
@@ -938,12 +985,16 @@
     unknownBox.checked = !!p.timeUnknown;
     placeInput.value = p.place || "";
     if (p.timezone !== undefined) timezoneSel.value = p.timezone;
+    person1GenderValue = p.gender || "male";
+    setActiveGenderChip(genderRow1, person1GenderValue);
   }
   function fillPartnerFormFromProfile(p){
     if (!p) return;
     pMonthSel.value = p.month; pDaySel.value = p.day; pYearSel.value = p.year;
     pHourSel.value = p.hour; pMinuteSel.value = p.minute; pAmpmSel.value = p.ampm;
     if (p.timezone !== undefined) pTimezoneSel.value = p.timezone;
+    person2GenderValue = p.gender || "female";
+    setActiveGenderChip(genderRow2, person2GenderValue);
   }
   function currentProfile(){
     return {
@@ -955,7 +1006,8 @@
       ampm: ampmSel.value,
       timeUnknown: unknownBox.checked,
       place: placeInput.value.trim(),
-      timezone: parseFloat(timezoneSel.value)
+      timezone: parseFloat(timezoneSel.value),
+      gender: person1GenderValue
     };
   }
   function currentPartnerProfile(){
@@ -966,7 +1018,8 @@
       hour: parseInt(pHourSel.value, 10),
       minute: parseInt(pMinuteSel.value, 10),
       ampm: pAmpmSel.value,
-      timezone: parseFloat(pTimezoneSel.value)
+      timezone: parseFloat(pTimezoneSel.value),
+      gender: person2GenderValue
     };
   }
 
@@ -1276,12 +1329,31 @@
     }, 150);
   }
 
+  // Partner Match's own gender toggle (.pm-gender-btn) is a pair of
+  // buttons per person, not a <select>/<input>, so it can't go through
+  // applyFieldMap — it's applied the same way the Meter's zodiac-sign
+  // restore works: find the button that already matches and click it
+  // if it isn't already the active one.
+  function applyPartnerGenderToDoc(doc){
+    if (!doc) return;
+    var p1 = readProfile() || DEFAULT_PROFILE;
+    var p2 = readPartnerProfile() || DEFAULT_PARTNER;
+    [["1", p1.gender || "male"], ["2", p2.gender || "female"]].forEach(function(pair){
+      var person = pair[0], gender = pair[1];
+      var btn = doc.querySelector('.pm-gender-btn[data-person="' + person + '"][data-gender="' + gender + '"]');
+      if (btn && !btn.classList.contains("active")) btn.click();
+    });
+  }
+
   function applyProfileToIframe(panelName, iframeEl){
     var p = readProfile();
     if (!p) return;
     var doc = getDoc(iframeEl);
     applyFieldMap(doc, p, WIDGET_MAP[panelName]);
-    if (panelName === "partner-match") applyFieldMap(doc, readPartnerProfile() || DEFAULT_PARTNER, PARTNER2_MAP);
+    if (panelName === "partner-match"){
+      applyFieldMap(doc, readPartnerProfile() || DEFAULT_PARTNER, PARTNER2_MAP);
+      applyPartnerGenderToDoc(doc);
+    }
     injectDetailCompact(doc, DETAIL_HIDE[panelName], DETAIL_EXTRA_CSS[panelName]);
     autoTriggerDetail(panelName, doc);
   }
@@ -1443,7 +1515,10 @@
     var doc = getDoc(iframeEl);
     if (!doc) return;
     if (QUICK_MAP[name]) applyFieldMap(doc, p, QUICK_MAP[name]);
-    if (name === "partner") applyFieldMap(doc, readPartnerProfile() || DEFAULT_PARTNER, PARTNER2_MAP);
+    if (name === "partner"){
+      applyFieldMap(doc, readPartnerProfile() || DEFAULT_PARTNER, PARTNER2_MAP);
+      applyPartnerGenderToDoc(doc);
+    }
     if (name === "forecast") applyMeterProfileToDoc(doc);
     if (name === "location"){
       applyCurrentLocationToDoc(doc);
