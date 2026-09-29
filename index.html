@@ -451,7 +451,17 @@
   var DEFAULT_CURRENT_LOCATION = { place: "London, UK" };
   var METER_SIGN_NAMES = ["Global","Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
   var METER_SIGN_SYMBOLS = ["\uD83C\uDF10","\u2648","\u2649","\u264A","\u264B","\u264C","\u264D","\u264E","\u264F","\u2650","\u2651","\u2652","\u2653"];
-  var DEFAULT_METER = { sign:0, gender:"male", mode:"now", month:1, day:1, year:2024, hour:12, minute:0, ampm:"PM" };
+  // Custom-moment fields default to "now" (converted to 12-hour form the
+  // same way the Meter widget itself does), not a fixed placeholder —
+  // otherwise a first-time visitor's Custom panel always starts stuck
+  // showing a fixed 12:00 PM regardless of when they actually opened it.
+  var __meterNow = new Date();
+  var __meterNowHour12 = __meterNow.getHours() % 12; if (__meterNowHour12 === 0) __meterNowHour12 = 12;
+  var DEFAULT_METER = {
+    sign:0, gender:"male", mode:"now",
+    month: __meterNow.getMonth() + 1, day: __meterNow.getDate(), year: __meterNow.getFullYear(),
+    hour: __meterNowHour12, minute: __meterNow.getMinutes(), ampm: __meterNow.getHours() >= 12 ? "PM" : "AM"
+  };
   // Same 17 cities the Location Checker widget itself offers as chips.
   var QUICK_CITIES = [
     { name: "Bangkok" }, { name: "Hong Kong" }, { name: "London" }, { name: "Sydney" },
